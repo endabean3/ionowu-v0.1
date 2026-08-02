@@ -1,36 +1,134 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Ionowu Company Profile
 
-## Getting Started
+Website company profile untuk **Ionowu**, software house yang merancang,
+membangun, dan merawat aplikasi web serta sistem internal untuk perusahaan yang
+sedang bertumbuh.
 
-First, run the development server:
+## Role Project
+
+Project ini adalah bagian depan yang diluncurkan lebih dulu. Backend Golang dan
+bot AI Python menyusul setelah website siap dipakai mencari klien.
+
+Arah kualitasnya mengikuti dokumen pedoman di folder `../document/`:
+
+- rasa visual futuristik, premium, dan rapi
+- animasi halus, sedikit, konsisten, dan tidak mengorbankan performa
+- konten jujur berdasarkan data yang sudah ada
+- tidak mengarang angka, testimoni, nama klien, alamat, atau legalitas
+- tetap ringan dan bisa dipakai di HP
+
+Jika ada konflik antara README ini dan dokumen pedoman, baca urutan dokumen di
+`../document/README.md`, terutama:
+
+- `03-konten-halaman.md` untuk isi halaman
+- `04-pedoman-design.md` untuk warna, huruf, jarak, dan token
+- `06-pedoman-animasi.md` untuk aturan gerak
+- `07-rencana-kerja.md` untuk tahap kerja
+
+## Cara Kerja Project
+
+Stack utama:
+
+- Next.js 16 App Router
+- React 19
+- TypeScript
+- Tailwind CSS v4
+- `motion` untuk animasi
+- `ogl` untuk latar WebGL Aurora di hero
+- Resend untuk pengiriman formulir kontak
+
+Struktur penting:
+
+```text
+src/app/                 route, layout, metadata, dan API route
+src/components/sections/ section halaman publik
+src/components/ui/       komponen UI dasar
+src/components/motion/   wrapper gerakan baku
+src/lib/data/            data layanan dan karya sementara
+src/lib/motion.ts        satu sumber aturan animasi
+src/app/globals.css      token desain dan utility Tailwind
+```
+
+Data bisnis yang belum ada ditandai di dokumen sebagai `[BELUM ADA]`. Jangan
+mengisi placeholder itu dengan asumsi pribadi sebelum dikonfirmasi.
+
+## Environment
+
+Salin `.env.local.example` menjadi `.env.local`, lalu isi nilai sungguhan:
+
+```env
+RESEND_API_KEY=
+NEXT_PUBLIC_SITE_URL=http://localhost:3000
+```
+
+Catatan formulir kontak:
+
+- tanpa `RESEND_API_KEY`, mode development mencatat pesan ke log server
+- tanpa `RESEND_API_KEY`, mode production mengembalikan error jelas
+- setelah key diisi, `/api/kontak` langsung mengirim email lewat Resend
+- alamat pengirim saat ini masih `onboarding@resend.dev`
+- setelah domain Ionowu diverifikasi di Resend, ganti alamat pengirim ke domain
+  sendiri di `src/app/api/kontak/route.ts`
+
+`.env.local` tidak boleh di-commit. File `.env*` sudah diabaikan oleh Git.
+
+Untuk production, isi `NEXT_PUBLIC_SITE_URL` dengan domain sungguhan, misalnya
+`https://ionowu.com`. Nilai ini dipakai Next.js untuk membuat URL absolut pada
+metadata Open Graph/Twitter.
+
+## Command
+
+Jalankan dari folder `web/`.
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Menjalankan development server.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+npm run typecheck
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Memeriksa TypeScript tanpa build.
 
-## Learn More
+```bash
+npm run lint
+```
 
-To learn more about Next.js, take a look at the following resources:
+Menjalankan ESLint.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```bash
+npm run tokens:check
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Memeriksa pelanggaran token desain di `src/`.
 
-## Deploy on Vercel
+```bash
+npm run check
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Menjalankan `typecheck`, `lint`, dan `tokens:check`.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```bash
+npm run build
+```
+
+Membuat build produksi.
+
+## Validasi Sebelum Launch
+
+Minimal sebelum dianggap siap luncur:
+
+- `npm run check` bersih
+- `npm run build` berhasil
+- semua route publik bisa dibuka
+- form kontak berhasil mengirim email sungguhan
+- tidak ada horizontal scroll di HP
+- navigasi bisa dipakai dengan keyboard
+- reduced motion tetap menampilkan halaman utuh
+- Lighthouse memenuhi target performa di dokumen pedoman
+- metadata/domain produksi sudah diisi
+
+Saat ini project berada di tahap **Poles dan Luncurkan**. Frontend inti sudah
+ada, tetapi launch penuh masih menunggu data bisnis resmi dan aktivasi Resend.

@@ -1,0 +1,76 @@
+import type { Metadata } from "next";
+import { Clock, ChatCircleDots } from "@phosphor-icons/react/dist/ssr";
+import { PageHeader } from "@/components/ui/PageHeader";
+import { Container, Section } from "@/components/ui/Container";
+import { Card } from "@/components/ui/Card";
+import { Reveal } from "@/components/motion/Reveal";
+import { FormulirKontak } from "@/components/kontak/FormulirKontak";
+import { copy, localizedAlternates, type Locale } from "@/lib/i18n";
+
+export const metadata: Metadata = {
+  title: "Kontak",
+  description:
+    "Ceritakan kebutuhan Anda. Konsultasi awal gratis, tanpa ikatan. Kami balas dalam 1x24 jam kerja.",
+  alternates: localizedAlternates("/kontak"),
+  openGraph: {
+    title: "Kontak",
+    description:
+      "Ceritakan kebutuhan Anda. Konsultasi awal gratis, tanpa ikatan. Kami balas dalam 1x24 jam kerja.",
+    locale: "id_ID",
+  },
+};
+
+export default function HalamanKontak() {
+  return <HalamanKontakContent locale="id" />;
+}
+
+export function HalamanKontakContent({ locale }: { locale: Locale }) {
+  const c = copy[locale];
+
+  return (
+    <main className="flex-1">
+      <PageHeader
+        title={c.pages.contact.title}
+        lead={c.pages.contact.lead}
+      />
+
+      <Section>
+        <Container width="prose" className="grid gap-10">
+          <Reveal>
+            <Card statis className="flex items-start gap-4">
+              <Clock size={22} weight="light" className="mt-0.5 shrink-0 text-accent" aria-hidden />
+              <div>
+                <h3 className="text-h3 text-ink">{c.pages.contact.responseTitle}</h3>
+                <p className="mt-2 text-ink-muted">
+                  {c.pages.contact.responseBody}
+                </p>
+              </div>
+            </Card>
+          </Reveal>
+
+          <Reveal delay={0.05}>
+            <FormulirKontak locale={locale} />
+          </Reveal>
+        </Container>
+      </Section>
+
+      <Section className="border-t border-line">
+        <Container width="prose">
+          <Reveal>
+            <div className="flex items-start gap-4">
+              <ChatCircleDots
+                size={22}
+                weight="light"
+                className="mt-0.5 shrink-0 text-ink-muted"
+                aria-hidden
+              />
+              <p className="text-small text-ink-muted">
+                {c.pages.contact.note}
+              </p>
+            </div>
+          </Reveal>
+        </Container>
+      </Section>
+    </main>
+  );
+}

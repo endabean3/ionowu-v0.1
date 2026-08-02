@@ -1,26 +1,591 @@
 @import "tailwindcss";
 
+/* ============================================================================
+   IONOWU — SISTEM TOKEN
+   Sumber: document/04-pedoman-design.md + document/06-pedoman-animasi.md
+
+   Disusun tiga lapis. Aturannya: setiap lapis hanya boleh menunjuk ke lapis
+   di atasnya, tidak pernah melompat ke bawah.
+
+     LAPIS 1  PRIMITIF   nilai mentah. Diberi nama sesuai WUJUDNYA.
+              contoh: --navy-950 = #050A12
+              Jarang berubah. Ini fondasi.
+
+     LAPIS 2  SEMANTIK   nama sesuai KEGUNAANNYA, menunjuk ke primitif.
+              contoh: --surface-base = var(--navy-950)
+              Di sinilah tempat mengganti tema kalau suatu saat perlu.
+
+     LAPIS 3  KOMPONEN   milik satu komponen saja, menunjuk ke semantik.
+              contoh: --button-primary-bg = var(--action-signal)
+              Untuk mengubah satu komponen tanpa mengganggu yang lain.
+
+   DILARANG menulis nilai mentah (#hex, angka ms, angka px acak) di dalam
+   komponen React. Semua harus lewat token.
+   ============================================================================ */
+
+/* ============================================================================
+   LAPIS 1 — PRIMITIF
+   ============================================================================ */
+
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* ---------- Skala navy ----------
+     Diturunkan dari Brand Navy #103F69. Dibuat lebih gelap supaya layak
+     jadi latar. Bukan #000000 — hitam pekat menimbulkan smear di layar OLED. */
+  --navy-950: #050a12;
+  --navy-900: #0a1220;
+  --navy-800: #0f1b2d;
+  --navy-700: #1c2c42;
+  --navy-500: #103f69; /* Brand Navy — nilai resmi, tidak boleh diubah */
+
+  /* ---------- Skala teal ---------- */
+  --teal-400: #22c7c8; /* versi terang, untuk teks */
+  --teal-500: #0f9b9c; /* Brand Teal — nilai resmi, tidak boleh diubah */
+
+  /* ---------- Skala oranye ---------- */
+  --orange-500: #f77a0e; /* Signal Orange — nilai resmi, tidak boleh diubah */
+
+  /* ---------- Skala abu kebiruan (teks) ---------- */
+  --slate-100: #e8eef6;
+  --slate-400: #8b9cb3;
+
+  /* ---------- Nilai mentah lain ---------- */
+  --opacity-disabled: 0.4;
+  --border-hairline: 1px;
+  --lift-distance: 4px; /* seberapa tinggi elemen naik saat disentuh */
+  --press-scale: 0.98;
 }
+
+/* ============================================================================
+   LAPIS 2 — SEMANTIK
+   ============================================================================ */
+
+:root {
+  /* ---------- Permukaan ---------- */
+  --surface-base: var(--navy-950); /* latar halaman */
+  --surface-raised: var(--navy-900); /* bagian yang sedikit terangkat */
+  --surface-card: var(--navy-800); /* kartu */
+  --surface-line: var(--navy-700); /* garis tepi & pembatas */
+
+  /* ---------- Teks ----------
+     Kontras terhadap --surface-base sudah dihitung, bukan dikira-kira. */
+  --text-primary: var(--slate-100); /* 17,00:1  AAA */
+  --text-muted: var(--slate-400); /*  7,09:1  AAA */
+  --text-accent: var(--teal-400); /*  9,51:1  AAA */
+
+  /* ---------- Aksi ---------- */
+  --action-signal: var(--orange-500); /* aksi utama — 7,32:1 AAA di atas base */
+  --action-accent: var(--teal-500); /* garis & cahaya — 5,85:1 AA */
+
+  /* Teks DI ATAS warna aksi wajib gelap.
+     Putih di atas oranye hanya 2,71:1 → GAGAL WCAG.
+     Putih di atas teal   hanya 3,39:1 → GAGAL WCAG. */
+  --action-on-signal: var(--navy-950); /* 7,32:1 di atas oranye */
+  --action-on-accent: var(--navy-950); /* 5,85:1 di atas teal   */
+
+  /* ---------- Identitas brand (tidak boleh diubah) ---------- */
+  --brand-navy: var(--navy-500);
+  --brand-teal: var(--teal-500);
+  --brand-orange: var(--orange-500);
+
+  /* ---------- Waktu animasi (dokumen 06) ---------- */
+  --duration-fast: 150ms; /* sentuhan kecil */
+  --duration-mid: 300ms; /* sebagian besar hal */
+  --duration-slow: 600ms; /* elemen masuk */
+  --duration-hero: 1000ms; /* pembuka halaman saja */
+
+  /* Lama gerakan baku — dokumen 06 */
+  --duration-sentuh: 250ms;
+  --duration-tekan: 120ms;
+
+  /* ---------- Cahaya ---------- */
+  --glow-soft: 0 0 24px rgb(15 155 156 / 0.12);
+  --glow: 0 0 60px rgb(15 155 156 / 0.15);
+  --glow-signal: 0 0 48px rgb(247 122 14 / 0.22);
+  --shade-lift: 0 18px 48px -12px rgb(2 6 14 / 0.8);
+
+  /* ---------- Lapisan (z-index) ---------- */
+  --z-raised: 10;
+  --z-sticky: 20;
+  --z-overlay: 40;
+  --z-modal: 100;
+  --z-toast: 1000;
+}
+
+/* ============================================================================
+   LAPIS 2b — JEMBATAN KE TAILWIND
+
+   `@theme inline` mengubah token semantik jadi utility Tailwind
+   (bg-base, text-ink, rounded-card, dan seterusnya).
+
+   Kata `inline` berarti utility langsung memakai nilai aslinya, bukan lewat
+   perantara. Ini yang membuat lapis primitif tetap jadi satu-satunya tempat
+   nilai sebenarnya disimpan.
+   ============================================================================ */
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  /* ---------- Warna ---------- */
+  --color-base: var(--surface-base);
+  --color-surface-1: var(--surface-raised);
+  --color-surface-2: var(--surface-card);
+  --color-line: var(--surface-line);
+
+  --color-ink: var(--text-primary);
+  --color-ink-muted: var(--text-muted);
+  --color-accent: var(--text-accent);
+  --color-accent-deep: var(--action-accent);
+  --color-signal: var(--action-signal);
+  --color-on-signal: var(--action-on-signal);
+  --color-on-accent: var(--action-on-accent);
+
+  --color-brand-navy: var(--brand-navy);
+  --color-brand-teal: var(--brand-teal);
+  --color-brand-orange: var(--brand-orange);
+
+  /* ---------- Huruf ---------- */
+  --font-display: var(--font-space-grotesk), ui-sans-serif, system-ui, sans-serif;
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-jetbrains-mono), ui-monospace, monospace;
+
+  /* ---------- Skala huruf (dokumen 04) ---------- */
+  --text-display: clamp(2.5rem, 7vw, 7.5rem); /*  40 → 120px */
+  --text-display--line-height: 0.95;
+  --text-display--letter-spacing: -0.03em;
+
+  --text-h1: clamp(2rem, 5vw, 4rem); /*  32 →  64px */
+  --text-h1--line-height: 1.05;
+  --text-h1--letter-spacing: -0.02em;
+
+  --text-h2: clamp(1.75rem, 3.5vw, 2.75rem); /*  28 →  44px */
+  --text-h2--line-height: 1.15;
+  --text-h2--letter-spacing: -0.02em;
+
+  --text-h3: clamp(1.25rem, 2vw, 1.75rem); /*  20 →  28px */
+  --text-h3--line-height: 1.25;
+  --text-h3--letter-spacing: -0.01em;
+
+  --text-lead: 1.125rem; /*  18px */
+  --text-lead--line-height: 1.7;
+
+  --text-body: 1rem; /*  16px — minimum di HP, cegah zoom otomatis iOS */
+  --text-body--line-height: 1.7;
+
+  --text-small: 0.875rem; /*  14px */
+  --text-small--line-height: 1.6;
+
+  /* ---------- Jarak antar bagian ---------- */
+  --spacing-section: 5rem; /*  80px — HP */
+  --spacing-section-lg: 12.5rem; /* 200px — laptop */
+  --spacing-gutter: 1.25rem; /*  20px — tepi kiri/kanan HP */
+
+  /* ---------- Lebar isi ---------- */
+  --container-content: 80rem; /* 1280px */
+  --container-prose: 42rem; /*  672px ≈ 70 huruf per baris */
+
+  /* ---------- Lengkungan sudut ---------- */
+  --radius-button: 0.75rem; /* 12px */
+  --radius-card: 1.25rem; /* 20px */
+  --radius-panel: 1.5rem; /* 24px */
+  --radius-media: 0.75rem; /* 12px */
+
+  /* ---------- Bayangan & cahaya ---------- */
+  --shadow-glow-sm: var(--glow-soft);
+  --shadow-glow: var(--glow);
+  --shadow-glow-signal: var(--glow-signal);
+  --shadow-lift: var(--shade-lift);
+
+  /* ---------- Kelengkungan gerak (dokumen 06) ----------
+     DILARANG memakai `linear` atau `ease` bawaan. */
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1); /* paling sering dipakai */
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+/* ============================================================================
+   LAPIS 3 — TOKEN KOMPONEN
+
+   Milik satu komponen saja. Gunanya: mengubah tampilan satu komponen tanpa
+   menyentuh token semantik yang dipakai bersama.
+   ============================================================================ */
+
+:root {
+  /* ---------- Tombol ---------- */
+  --button-radius: var(--radius-button);
+  --button-min-height: 2.75rem; /* 44px — syarat ukuran sentuh */
+
+  --button-primary-bg: var(--action-signal);
+  --button-primary-fg: var(--action-on-signal);
+  --button-primary-glow: var(--glow-signal);
+
+  --button-secondary-bg: rgb(15 27 45 / 0.6);
+  --button-secondary-fg: var(--text-primary);
+  --button-secondary-border: var(--surface-line);
+  --button-secondary-border-hover: var(--action-accent);
+
+  --button-ghost-fg: var(--text-muted);
+  --button-ghost-fg-hover: var(--text-primary);
+  --button-ghost-bg-hover: rgb(15 27 45 / 0.6);
+
+  /* ---------- Kartu ---------- */
+  --card-bg: rgb(15 27 45 / 0.7);
+  --card-border: var(--surface-line);
+  --card-border-hover: var(--action-accent);
+  --card-radius: var(--radius-card);
+  --card-shadow: var(--shade-lift);
+  --card-shadow-hover: var(--glow);
+
+  /* ---------- Panel kaca (menu atas, panel melayang) ---------- */
+  --glass-bg: rgb(15 27 45 / 0.6);
+  --glass-blur: 20px;
+  --glass-border: rgb(255 255 255 / 0.08);
+
+  /* ---------- Cincin fokus ---------- */
+  --focus-ring-color: var(--text-accent);
+  --focus-ring-width: 2px;
+  --focus-ring-offset: 3px;
+
+  /* ---------- Marquee (strip teknologi berjalan) ---------- */
+  --marquee-duration: 32s;
+
+  /* ---------- Formulir ---------- */
+  --field-bg: var(--navy-900);
+  --field-border: var(--surface-line);
+  --field-border-focus: var(--action-accent);
+  --field-border-error: var(--orange-500);
+  --field-radius: var(--radius-button);
+  --field-label-color: var(--text-primary);
+  --field-help-color: var(--text-muted);
+  --field-error-color: var(--orange-500);
+}
+
+/* ============================================================================
+   UTILITY TAMBAHAN
+
+   Tailwind v4 hanya mengenali sebagian nama token (--color-*, --text-*,
+   --spacing-*, --radius-*, --shadow-*, --ease-*, --container-*, --font-*).
+   `--duration-*` dan `--z-*` BUKAN bagian dari daftar itu. Kalau ditaruh di
+   dalam @theme, keduanya dibuang diam-diam tanpa pesan kesalahan.
+   Jadi dijadikan utility sendiri di sini.
+   ============================================================================ */
+
+@utility duration-fast {
+  transition-duration: var(--duration-fast);
+}
+@utility duration-mid {
+  transition-duration: var(--duration-mid);
+}
+@utility duration-slow {
+  transition-duration: var(--duration-slow);
+}
+@utility duration-hero {
+  transition-duration: var(--duration-hero);
+}
+
+@utility z-raised {
+  z-index: var(--z-raised);
+}
+@utility z-sticky {
+  z-index: var(--z-sticky);
+}
+@utility z-overlay {
+  z-index: var(--z-overlay);
+}
+@utility z-modal {
+  z-index: var(--z-modal);
+}
+@utility z-toast {
+  z-index: var(--z-toast);
+}
+
+/* ============================================================================
+   DASAR
+   ============================================================================ */
+
+@layer base {
+  * {
+    border-color: var(--surface-line);
+  }
+
+  html {
+    scroll-behavior: smooth;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    background-color: var(--surface-base);
+    color: var(--text-primary);
+    font-family: var(--font-sans);
+    font-size: 1rem;
+    line-height: 1.7;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  /* Judul: berat 500/600 saja. 700+ terlihat murah di latar gelap. */
+  h1,
+  h2,
+  h3,
+  h4 {
+    font-family: var(--font-display);
+    font-weight: 500;
+    text-wrap: balance;
+  }
+
+  p {
+    text-wrap: pretty;
+  }
+
+  /* Fokus keyboard wajib terlihat jelas (dokumen 04) */
+  :focus-visible {
+    outline: var(--focus-ring-width) solid var(--focus-ring-color);
+    outline-offset: var(--focus-ring-offset);
+    border-radius: 4px;
+  }
+
+  ::selection {
+    background-color: var(--action-accent);
+    color: var(--action-on-accent);
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+/* ============================================================================
+   KOMPONEN
+
+   Ditulis sebagai satu kelas utuh, bukan tumpukan utility.
+
+   Alasannya bukan selera. Pada Tahap 1 pernah terjadi: `tailwind-merge`
+   mengira kelas warna teks bentrok dengan kelas ukuran huruf, lalu
+   membuangnya diam-diam. Teks tombol jadi putih di atas oranye — gagal WCAG.
+   Satu kelas utuh tidak bisa mengalami masalah itu.
+   ============================================================================ */
+
+@layer components {
+  /* ---------- Tombol ---------- */
+
+  .btn {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    min-height: var(--button-min-height);
+    border-radius: var(--button-radius);
+    font-weight: 500;
+    white-space: nowrap;
+    cursor: pointer;
+    user-select: none;
+    transition-property: color, background-color, border-color, box-shadow;
+    transition-duration: var(--duration-mid);
+    transition-timing-function: var(--ease-out);
+  }
+
+  .btn:disabled,
+  .btn[aria-disabled="true"] {
+    opacity: var(--opacity-disabled);
+    cursor: not-allowed;
+    pointer-events: none;
+  }
+
+  .btn-md {
+    padding: 0.625rem 1.25rem;
+    font-size: var(--text-body);
+  }
+
+  .btn-lg {
+    padding: 0.875rem 1.75rem;
+    font-size: var(--text-lead);
+  }
+
+  .btn-primary {
+    background-color: var(--button-primary-bg);
+    color: var(--button-primary-fg);
+  }
+  .btn-primary:hover {
+    box-shadow: var(--button-primary-glow);
+  }
+
+  .btn-secondary {
+    background-color: var(--button-secondary-bg);
+    color: var(--button-secondary-fg);
+    border: var(--border-hairline) solid var(--button-secondary-border);
+  }
+  .btn-secondary:hover {
+    border-color: var(--button-secondary-border-hover);
+    box-shadow: var(--glow-soft);
+  }
+
+  .btn-ghost {
+    color: var(--button-ghost-fg);
+  }
+  .btn-ghost:hover {
+    color: var(--button-ghost-fg-hover);
+    background-color: var(--button-ghost-bg-hover);
+  }
+
+  /* ---------- Kartu ---------- */
+
+  .card {
+    border-radius: var(--card-radius);
+    border: var(--border-hairline) solid var(--card-border);
+    background-color: var(--card-bg);
+    box-shadow: var(--card-shadow);
+    padding: 1.5rem;
+  }
+
+  @media (width >= 40rem) {
+    .card {
+      padding: 2rem;
+    }
+  }
+
+  .card-interactive {
+    transition-property: border-color, box-shadow;
+    transition-duration: var(--duration-mid);
+    transition-timing-function: var(--ease-out);
+  }
+  .card-interactive:hover {
+    border-color: var(--card-border-hover);
+    box-shadow: var(--card-shadow-hover);
+  }
+
+  /* ---------- Panel kaca ----------
+     TERBATAS: hanya menu atas dan panel melayang.
+     Kalau semua permukaan jadi kaca, tidak ada yang istimewa. */
+
+  .glass {
+    background-color: var(--glass-bg);
+    -webkit-backdrop-filter: blur(var(--glass-blur));
+    backdrop-filter: blur(var(--glass-blur));
+    border: var(--border-hairline) solid var(--glass-border);
+  }
+
+  /* ---------- Formulir ----------
+     Label di atas, teks bantu/error di bawah (dokumen 02). Placeholder
+     tidak pernah dipakai sebagai pengganti label. */
+
+  .field-label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-size: var(--text-small);
+    font-weight: 500;
+    color: var(--field-label-color);
+  }
+
+  .field-input {
+    width: 100%;
+    min-height: 2.75rem; /* 44px — syarat ukuran sentuh */
+    padding: 0.625rem 0.875rem;
+    border-radius: var(--field-radius);
+    background-color: var(--field-bg);
+    border: var(--border-hairline) solid var(--field-border);
+    color: var(--text-primary);
+    font-size: var(--text-body);
+    transition-property: border-color, box-shadow;
+    transition-duration: var(--duration-mid);
+    transition-timing-function: var(--ease-out);
+  }
+
+  .field-input::placeholder {
+    color: var(--text-muted);
+  }
+
+  .field-input:focus-visible {
+    outline: none;
+    border-color: var(--field-border-focus);
+    box-shadow: 0 0 0 3px rgb(34 199 200 / 0.15);
+  }
+
+  .field-input[aria-invalid="true"] {
+    border-color: var(--field-border-error);
+  }
+
+  textarea.field-input {
+    min-height: 8rem;
+    resize: vertical;
+  }
+
+  .field-help {
+    margin-top: 0.5rem;
+    font-size: var(--text-small);
+    color: var(--field-help-color);
+  }
+
+  .field-error {
+    margin-top: 0.5rem;
+    font-size: var(--text-small);
+    color: var(--field-error-color);
+  }
+}
+
+/* ============================================================================
+   UTILITY KECIL
+   ============================================================================ */
+
+@layer utilities {
+  /* Angka sejajar lebar — cegah pergeseran tata letak saat menghitung naik */
+  .tabular {
+    font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* Latar bercahaya lembut. Dipakai sekali di hero, bukan di mana-mana. */
+  .glow-field {
+    background-image:
+      radial-gradient(60rem 40rem at 50% -10%, rgb(15 155 156 / 0.14), transparent 70%),
+      radial-gradient(40rem 30rem at 90% 10%, rgb(16 63 105 / 0.35), transparent 70%);
+  }
+
+  /* Memudarkan latar Aurora ke bawah. Efek aurora aslinya dibuat untuk
+     panel pendek/lebar — di hero yang tinggi penuh layar, bagian bawahnya
+     dipudarkan lewat CSS supaya menyatu, bukan berhenti dengan tepi keras. */
+  .aurora-fade {
+    mask-image: linear-gradient(to bottom, black 0%, black 45%, transparent 92%);
+    -webkit-mask-image: linear-gradient(to bottom, black 0%, black 45%, transparent 92%);
+  }
+
+  /* Strip yang berjalan tanpa putus (dokumen 06: LogoLoop).
+     Kontennya diulang dua kali oleh komponen; animasi menggeser separuh
+     lebar (-50%), jadi sambungannya tidak terlihat. Murni CSS — tidak
+     menambah kerja JavaScript tiap frame. */
+  .marquee-track {
+    animation: marquee var(--marquee-duration) linear infinite;
+  }
+  .marquee-track:hover {
+    animation-play-state: paused;
+  }
+
+  /* Tepi kiri-kanan memudar ke latar, supaya strip terlihat menyatu
+     dengan bagiannya, bukan terpotong tegas. */
+  .marquee-fade {
+    mask-image: linear-gradient(to right, transparent, black 10%, black 90%, transparent);
+    -webkit-mask-image: linear-gradient(to right, transparent, black 10%, black 90%, transparent);
+  }
+}
+
+@keyframes marquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+/* ============================================================================
+   MATIKAN ANIMASI — WAJIB (dokumen 06)
+   Kalau pengguna mematikan animasi di setelan perangkatnya, seluruh animasi
+   mati. Website tetap utuh dan terbaca.
+   ============================================================================ */
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
