@@ -21,6 +21,7 @@
 
 # production
 /build
+/50043/
 
 # misc
 .DS_Store

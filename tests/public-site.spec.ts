@@ -62,6 +62,83 @@ test("contact form wires server field errors into controls", async ({ page }) =>
   await expect(page.locator("#pesan")).toHaveAttribute("aria-invalid", "true");
 });
 
+test("contact API never reports success without the durable pipeline", async ({ request }) => {
+  const response = await request.post("/api/kontak", {
+    headers: {
+      origin: new URL(process.env.QA_BASE_URL ?? "http://127.0.0.1:3002").origin,
+    },
+    data: {
+      request_id: "qa-missing-pipeline-001",
+      nama: "QA Ionowu",
+      email: "qa@example.com",
+      perusahaan: "Ionowu QA",
+      kebutuhan: "aplikasi-web-khusus",
+      pesan: "Pesan valid untuk memastikan API tidak memberi sukses palsu.",
+      anggaran: "",
+      locale: "id",
+      situs: "",
+    },
+  });
+
+  expect(response.status()).toBe(503);
+  await expect(response.json()).resolves.toMatchObject({ ok: false });
+});
+
+test("contact API accepts valid manual submissions without client request id", async ({ request }) => {
+  const response = await request.post("/api/kontak", {
+    headers: {
+      origin: new URL(process.env.QA_BASE_URL ?? "http://127.0.0.1:3002").origin,
+    },
+    data: {
+      nama: "Manual QA Ionowu",
+      email: "manual-qa@example.com",
+      perusahaan: "Ionowu QA",
+      kebutuhan: "aplikasi-web-khusus",
+      pesan: "Pesan valid dari klien manual tanpa request id dari browser.",
+      anggaran: "",
+      locale: "id",
+      situs: "",
+    },
+  });
+
+  expect(response.status()).toBe(503);
+  await expect(response.json()).resolves.toMatchObject({ ok: false });
+});
+
+test("PWA manifest follows the default light browser chrome", async ({ request }) => {
+  const response = await request.get("/manifest.webmanifest");
+  expect(response.ok()).toBe(true);
+
+  await expect(response.json()).resolves.toMatchObject({
+    background_color: "#f4f8fb",
+    theme_color: "#f4f8fb",
+  });
+});
+
+test("production responses include independent security headers", async ({ request }) => {
+  const response = await request.get("/");
+  expect(response.headers()["x-frame-options"]).toBe("DENY");
+  expect(response.headers()["strict-transport-security"]).toContain(
+    "max-age=31536000",
+  );
+  expect(response.headers()["content-security-policy"]).toContain(
+    "frame-ancestors 'none'",
+  );
+  expect(response.headers()["content-security-policy"]).toContain(
+    "object-src 'none'",
+  );
+});
+
+test("document keeps CSP restrictions when an upstream proxy rewrites headers", async ({ page }) => {
+  await page.goto("/");
+  const policy = await page
+    .locator('meta[http-equiv="Content-Security-Policy"]')
+    .getAttribute("content");
+  expect(policy).toContain("script-src 'self'");
+  expect(policy).toContain("object-src 'none'");
+  expect(policy).toContain("base-uri 'self'");
+});
+
 test("reduced motion keeps the site usable", async ({ page }) => {
   await page.emulateMedia({ reducedMotion: "reduce" });
   await page.goto("/");

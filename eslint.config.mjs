@@ -14,6 +14,7 @@ const eslintConfig = defineConfig([
     "playwright-report/**",
     "test-results/**",
     "next-env.d.ts",
+    "50043/**",
     // Skrip Node biasa (CommonJS), bukan bagian dari aplikasi.
     "scripts/**",
   ]),

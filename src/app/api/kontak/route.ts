@@ -1,5 +1,12 @@
 import { NextResponse } from "next/server";
-import { Resend } from "resend";
+import { randomUUID } from "node:crypto";
+import { createLeadIntake } from "@/lib/leads/intake";
+import { isContactPipelineConfigured } from "@/lib/leads/env";
+import {
+  consumeContactRateLimit,
+  trustedClientIp,
+} from "@/lib/leads/rate-limit";
+import { processResendOutboxEvent } from "@/lib/outbox/resend";
 import { isLocale, type Locale } from "@/lib/i18n";
 
 /* ============================================================
@@ -8,18 +15,18 @@ import { isLocale, type Locale } from "@/lib/i18n";
    Tujuan sudah dikonfirmasi: office@ionowu.com.
 
    STATUS PENGIRIMAN — WAJIB DIBACA SEBELUM DIANGGAP SELESAI:
-   Kode di bawah SUDAH bisa mengirim email sungguhan lewat Resend, tapi
-   HANYA kalau env var `RESEND_API_KEY` sudah diisi. Tanpa itu:
-   - development: pesan dicatat ke log server supaya alur form tetap bisa diuji
-   - production: request ditolak jelas, supaya pengguna tidak melihat
-     "berhasil" padahal email tidak terkirim
+   Form hanya menerima pesan kalau database, Resend, dan cron secret tersedia.
+   Lead, audit log, serta outbox disimpan dalam satu transaksi. Event email
+   yang sama lalu dicoba langsung; cron menangani retry jika proses terputus.
+   API tidak mengembalikan sukses sebelum lead tersimpan dan email terkirim.
 
    Sebelum situs ini diluncurkan ke publik (dokumen 07 Tahap 5), WAJIB:
    1. Daftar akun di resend.com (ini langkah yang HARUS dilakukan Nolan
       sendiri — bukan sesuatu yang bisa dibuatkan).
    2. Buat API key di dashboard Resend, isi ke `.env.local` sebagai
       `RESEND_API_KEY=...` (lihat `.env.local.example`).
-   3. Alamat pengirim (`ALAMAT_DARI` di bawah) masih memakai domain uji
+   3. Isi `DATABASE_URL`, jalankan migration, lalu pasang pemanggil cron.
+   4. Alamat pengirim (`ALAMAT_DARI` di bawah) masih memakai domain uji
       bawaan Resend (`onboarding@resend.dev`) — ini hanya bisa mengirim ke
       alamat yang sama dengan email pendaftaran akun Resend. Begitu domain
       ionowu.com diverifikasi di Resend (Tambah Domain → catatan DNS →
@@ -29,14 +36,19 @@ import { isLocale, type Locale } from "@/lib/i18n";
    Larangan yang sudah dipenuhi (dokumen 05):
    - Semua isian diperiksa ulang di server, bukan percaya pemeriksaan browser.
    - Jebakan robot (honeypot): kolom tersembunyi yang hanya diisi robot.
-   - Pembatas kiriman per IP (lite): lihat catatan di bawah soal batasannya.
+   - Pembatas kiriman atomik di Postgres: bucket global dan hash email selalu
+     aktif; IP hanya dipakai dari header proxy yang dipercaya secara eksplisit.
    ============================================================ */
 
 const ALAMAT_TUJUAN = "office@ionowu.com";
 const ALAMAT_DARI = "Ionowu <onboarding@resend.dev>"; // TODO: ganti ke @ionowu.com setelah domain terverifikasi di Resend
 const SITE_ORIGIN = new URL(
-  process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000",
+  process.env.NEXT_PUBLIC_SITE_URL ??
+    (process.env.NODE_ENV === "production"
+      ? "https://ionowu.com"
+      : "http://localhost:3000"),
 ).origin;
+const PRODUCTION_ORIGINS = ["https://ionowu.com", "https://www.ionowu.com"];
 const MAKS_BODY_BYTES = 20 * 1024;
 const MAKS_PANJANG = {
   nama: 120,
@@ -47,6 +59,7 @@ const MAKS_PANJANG = {
   anggaran: 80,
   situs: 200,
   locale: 8,
+  request_id: 80,
 } as const;
 const DEV_ORIGINS = ["http://localhost:3000", "http://localhost:3001"];
 
@@ -63,6 +76,7 @@ const LABEL_KEBUTUHAN: Record<string, string> = {
 const KEBUTUHAN_VALID = Object.keys(LABEL_KEBUTUHAN);
 
 type BodyKontak = {
+  request_id?: unknown;
   nama?: unknown;
   email?: unknown;
   perusahaan?: unknown;
@@ -158,27 +172,6 @@ const PESAN_API: Record<
   },
 };
 
-/* Pembatas kiriman per IP — SEDERHANA, disimpan di memori proses.
-   Cukup untuk satu server yang jalan terus (`next start`). TIDAK berfungsi
-   benar di lingkungan serverless (tiap permintaan bisa kena proses/instance
-   berbeda, memori tidak dibagi). Kalau nanti dipasang di platform
-   serverless, ganti dengan penyimpan bersama (mis. Upstash Redis) — atau
-   pindahkan ke backend Golang (dokumen 07 Tahap 6) yang punya database. */
-const KIRIMAN_PER_IP = new Map<string, number[]>();
-const BATAS_KIRIMAN = 5;
-const JENDELA_MS = 60 * 60 * 1000; // 1 jam
-
-function kenaBatas(ip: string): boolean {
-  const sekarang = Date.now();
-  const riwayat = (KIRIMAN_PER_IP.get(ip) ?? []).filter(
-    (t) => sekarang - t < JENDELA_MS,
-  );
-  if (riwayat.length >= BATAS_KIRIMAN) return true;
-  riwayat.push(sekarang);
-  KIRIMAN_PER_IP.set(ip, riwayat);
-  return false;
-}
-
 function escapeHtml(nilai: string): string {
   return nilai
     .replace(/&/g, "&amp;")
@@ -189,6 +182,12 @@ function escapeHtml(nilai: string): string {
 
 function terlaluPanjang(nilai: string, batas: number): boolean {
   return nilai.length > batas;
+}
+
+function requestIdDari(request: Request, body: BodyKontak): string {
+  const dariBody = typeof body.request_id === "string" ? body.request_id.trim() : "";
+  const dariHeader = request.headers.get("idempotency-key")?.trim() ?? "";
+  return dariBody || dariHeader || randomUUID();
 }
 
 function originDiizinkan(request: Request): boolean {
@@ -204,6 +203,7 @@ function originDiizinkan(request: Request): boolean {
   const daftarOrigin = new Set([
     SITE_ORIGIN,
     requestOrigin,
+    ...PRODUCTION_ORIGINS,
     ...(process.env.NODE_ENV === "production" ? [] : DEV_ORIGINS),
   ]);
 
@@ -323,6 +323,10 @@ export async function POST(request: Request) {
   const kebutuhan = typeof body.kebutuhan === "string" ? body.kebutuhan : "";
   const isiPesan = typeof body.pesan === "string" ? body.pesan.trim() : "";
   const anggaran = typeof body.anggaran === "string" ? body.anggaran.trim() : "";
+  const requestId = requestIdDari(request, body);
+  const locale = typeof body.locale === "string" && isLocale(body.locale)
+    ? body.locale
+    : "id";
 
   const kesalahan: Record<string, string> = {};
   if (!nama || nama.length < 2) kesalahan.nama = teksApi.nameRequired;
@@ -351,57 +355,58 @@ export async function POST(request: Request) {
   if (terlaluPanjang(anggaran, MAKS_PANJANG.anggaran)) {
     kesalahan.anggaran = teksApi.budgetLong;
   }
+  if (
+    !requestId ||
+    terlaluPanjang(requestId, MAKS_PANJANG.request_id) ||
+    !/^[a-zA-Z0-9._:-]{8,80}$/.test(requestId)
+  ) {
+    kesalahan.request_id = teksApi.invalid;
+  }
 
   if (Object.keys(kesalahan).length > 0) {
     return NextResponse.json({ ok: false, fieldErrors: kesalahan }, { status: 422 });
   }
 
-  const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "tidak-diketahui";
+  if (!isContactPipelineConfigured()) {
+    return NextResponse.json(
+      { ok: false, error: teksApi.notReady },
+      { status: 503 },
+    );
+  }
 
-  if (kenaBatas(ip)) {
+  let rateLimit;
+  try {
+    rateLimit = await consumeContactRateLimit({
+      email,
+      ip: trustedClientIp(request),
+    });
+  } catch (err) {
+    console.error("[kontak] rate limit tidak tersedia:", {
+      code: err instanceof Error ? err.message : "unknown",
+    });
+    return NextResponse.json(
+      { ok: false, error: teksApi.notReady },
+      { status: 503 },
+    );
+  }
+  if (rateLimit.limited) {
     return NextResponse.json(
       { ok: false, error: teksApi.rate },
-      { status: 429 },
+      {
+        status: 429,
+        headers: { "Retry-After": String(rateLimit.retryAfterSeconds) },
+      },
     );
   }
 
   const labelKebutuhan = LABEL_KEBUTUHAN[kebutuhan] ?? kebutuhan;
-  const apiKey = process.env.RESEND_API_KEY;
 
-  if (!apiKey) {
-    if (process.env.NODE_ENV === "production") {
-      console.error("[kontak] RESEND_API_KEY belum diisi di production.");
-      return NextResponse.json(
-        {
-          ok: false,
-          error: teksApi.notReady,
-        },
-        { status: 503 },
-      );
-    }
-
-    // Development tanpa kunci — dicatat ke log server saja. Lihat catatan
-    // di atas berkas ini untuk langkah mengaktifkan pengiriman sungguhan.
-    console.log("[kontak] pesan masuk (RESEND_API_KEY belum diisi, belum terkirim):", {
-      nama,
-      email,
-      perusahaan: perusahaan || "(tidak diisi)",
-      kebutuhan: labelKebutuhan,
-      pesan: isiPesan,
-      anggaran: anggaran || "(tidak diisi)",
-      waktu: new Date().toISOString(),
-    });
-    return NextResponse.json({ ok: true });
-  }
-
-  try {
-    const resend = new Resend(apiKey);
-    const { error } = await resend.emails.send({
-      from: ALAMAT_DARI,
-      to: ALAMAT_TUJUAN,
-      replyTo: email,
-      subject: `Pesan baru dari ${nama} — ${labelKebutuhan}`,
-      html: `
+  const notification = {
+    from: ALAMAT_DARI,
+    to: ALAMAT_TUJUAN,
+    replyTo: email,
+    subject: `Pesan baru dari ${nama} - ${labelKebutuhan}`,
+    html: `
         <div style="font-family: sans-serif; line-height: 1.6;">
           <p><strong>Nama:</strong> ${escapeHtml(nama)}</p>
           <p><strong>Email:</strong> ${escapeHtml(email)}</p>
@@ -412,20 +417,33 @@ export async function POST(request: Request) {
           <p>${escapeHtml(isiPesan).replace(/\n/g, "<br />")}</p>
         </div>
       `,
+  };
+
+  try {
+    const intake = await createLeadIntake({
+      requestId,
+      name: nama,
+      email,
+      company: perusahaan,
+      serviceType: kebutuhan,
+      serviceLabel: labelKebutuhan,
+      message: isiPesan,
+      budgetRange: anggaran,
+      locale,
+      emailNotification: notification,
     });
 
-    if (error) {
-      console.error("[kontak] Resend menolak pengiriman:", error);
-      return NextResponse.json(
-        { ok: false, error: teksApi.failed },
-        { status: 502 },
-      );
+    const delivery = await processResendOutboxEvent(intake.outboxEventId);
+    if (!delivery.delivered) {
+      throw new Error(`outbox-delivery-${delivery.status}`);
     }
   } catch (err) {
-    console.error("[kontak] gagal memanggil Resend:", err);
+    console.error("[kontak] intake lead belum selesai:", {
+      code: err instanceof Error ? err.message : "unknown",
+    });
     return NextResponse.json(
-      { ok: false, error: teksApi.failed },
-      { status: 502 },
+      { ok: false, error: teksApi.notReady },
+      { status: 503 },
     );
   }
 

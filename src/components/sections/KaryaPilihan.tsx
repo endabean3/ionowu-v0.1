@@ -40,7 +40,7 @@ export function KaryaPilihan({ locale = "id" }: { locale?: Locale }) {
                     tangkapan layar sungguhan nantinya. Menang atas padding
                     bawaan .card lewat urutan @layer (utilities > components). */}
                 <TiltCard className="h-full p-0">
-                  <KaryaMedia pola={k.pola} className="h-40" />
+                  <KaryaMedia pola={k.pola} className="h-48" />
                   <div className="p-6 sm:p-8">
                     <div className="text-small text-accent">{k.bidang}</div>
                     <h3 className="mt-2 text-h3 text-ink">{k.nama}</h3>

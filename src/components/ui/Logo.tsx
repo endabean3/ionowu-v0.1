@@ -27,17 +27,32 @@ const UKURAN = {
 export function Logo({ jenis = "full", className, tinggi = 32 }: LogoProps) {
   const { w, h } = UKURAN[jenis];
   const lebar = Math.round((w / h) * tinggi);
-  const berkas = jenis === "full" ? "ionowu-white.svg" : "ionowu-mark-white.svg";
+  const berkasGelap = jenis === "full" ? "ionowu-white.svg" : "ionowu-mark-white.svg";
+  const berkasTerang =
+    jenis === "full" ? "ionowu-full-color.svg" : "ionowu-mark-full-color.svg";
 
   return (
-    <Image
-      src={`/brand/${berkas}`}
-      alt="Ionowu"
-      width={lebar}
-      height={tinggi}
-      className={cn("h-auto w-auto", className)}
+    <span
+      className={cn("relative inline-block shrink-0", className)}
       style={{ height: tinggi, width: lebar }}
-      priority
-    />
+    >
+      <Image
+        src={`/brand/${berkasGelap}`}
+        alt="Ionowu"
+        width={lebar}
+        height={tinggi}
+        className="theme-logo-dark absolute inset-0 h-full w-full"
+        priority
+      />
+      <Image
+        src={`/brand/${berkasTerang}`}
+        alt=""
+        width={lebar}
+        height={tinggi}
+        className="theme-logo-light absolute inset-0 h-full w-full"
+        aria-hidden
+        priority
+      />
+    </span>
   );
 }

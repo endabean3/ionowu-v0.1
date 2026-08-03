@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { List, X } from "@phosphor-icons/react";
 import { Logo } from "@/components/ui/Logo";
+import { ThemeToggle } from "@/components/theme/ThemeToggle";
 import { ease } from "@/lib/motion";
 import {
   copy,
@@ -33,10 +34,10 @@ export function Header() {
   const c = copy[locale];
   const pathTanpaLocale = stripLocale(pathname);
   const tautan = [
-    { label: c.nav.services, href: withLocale("/layanan", locale) },
-    { label: c.nav.work, href: withLocale("/karya", locale) },
-    { label: c.nav.about, href: withLocale("/tentang", locale) },
-    { label: c.nav.contact, href: withLocale("/kontak", locale) },
+    { label: c.nav.services, path: "/layanan", href: withLocale("/layanan", locale) },
+    { label: c.nav.work, path: "/karya", href: withLocale("/karya", locale) },
+    { label: c.nav.about, path: "/tentang", href: withLocale("/tentang", locale) },
+    { label: c.nav.contact, path: "/kontak", href: withLocale("/kontak", locale) },
   ];
 
   return (
@@ -59,30 +60,37 @@ export function Header() {
           className="glass hidden items-center gap-1 rounded-full p-1.5 md:flex"
           onMouseLeave={() => setDitunjuk(null)}
         >
-          {tautan.map((t) => (
-            <Link
-              key={t.href}
-              href={t.href}
-              onMouseEnter={() => setDitunjuk(t.href)}
-              className="relative rounded-full px-4 py-2 text-small font-medium text-ink-muted transition-colors duration-mid ease-out hover:text-ink"
-            >
-              {ditunjuk === t.href && (
-                <motion.span
-                  layoutId="pil-nav-aktif"
-                  className="absolute inset-0 rounded-full bg-surface-2"
-                  transition={
-                    kurangiGerak
-                      ? { duration: 0 }
-                      : { type: "spring", stiffness: 400, damping: 32 }
-                  }
-                />
-              )}
-              <span className="relative">{t.label}</span>
-            </Link>
-          ))}
+          {tautan.map((t) => {
+            const aktif =
+              pathTanpaLocale === t.path || pathTanpaLocale.startsWith(`${t.path}/`);
+
+            return (
+              <Link
+                key={t.href}
+                href={t.href}
+                aria-current={aktif ? "page" : undefined}
+                onMouseEnter={() => setDitunjuk(t.href)}
+                className="relative rounded-full px-4 py-2 text-small font-medium text-ink-muted transition-colors duration-mid ease-out hover:text-ink aria-[current=page]:text-ink"
+              >
+                {(ditunjuk === t.href || (!ditunjuk && aktif)) && (
+                  <motion.span
+                    layoutId="pil-nav-aktif"
+                    className="absolute inset-0 rounded-full bg-surface-2"
+                    transition={
+                      kurangiGerak
+                        ? { duration: 0 }
+                        : { type: "spring", stiffness: 400, damping: 32 }
+                    }
+                  />
+                )}
+                <span className="relative">{t.label}</span>
+              </Link>
+            );
+          })}
         </nav>
 
         <div className="hidden items-center gap-3 md:flex">
+          <ThemeToggle label={c.nav.theme} />
           <div className="glass flex items-center rounded-full p-1">
             {LOCALES.map((l) => (
               <Link
@@ -103,16 +111,19 @@ export function Header() {
           </Link>
         </div>
 
-        {/* ---------- Tombol menu HP ---------- */}
-        <button
-          type="button"
-          aria-label={menuTerbuka ? c.nav.closeMenu : c.nav.openMenu}
-          aria-expanded={menuTerbuka}
-          onClick={() => setMenuTerbuka((v) => !v)}
-          className="glass flex h-11 w-11 items-center justify-center rounded-full text-ink md:hidden"
-        >
-          {menuTerbuka ? <X size={20} /> : <List size={20} />}
-        </button>
+        {/* ---------- Kontrol HP ---------- */}
+        <div className="flex items-center gap-2 md:hidden">
+          <ThemeToggle label={c.nav.theme} />
+          <button
+            type="button"
+            aria-label={menuTerbuka ? c.nav.closeMenu : c.nav.openMenu}
+            aria-expanded={menuTerbuka}
+            onClick={() => setMenuTerbuka((v) => !v)}
+            className="glass flex h-11 w-11 items-center justify-center rounded-full text-ink"
+          >
+            {menuTerbuka ? <X size={20} /> : <List size={20} />}
+          </button>
+        </div>
       </div>
 
       {/* ---------- Menu HP ---------- */}
@@ -127,17 +138,23 @@ export function Header() {
             className="glass mx-gutter mt-2 rounded-panel p-2 md:hidden"
           >
             <ul className="flex flex-col gap-1">
-              {tautan.map((t) => (
-                <li key={t.href}>
-                  <Link
-                    href={t.href}
-                    onClick={() => setMenuTerbuka(false)}
-                    className="block rounded-card px-4 py-3 text-body text-ink transition-colors duration-mid ease-out hover:bg-surface-2"
-                  >
-                    {t.label}
-                  </Link>
-                </li>
-              ))}
+              {tautan.map((t) => {
+                const aktif =
+                  pathTanpaLocale === t.path || pathTanpaLocale.startsWith(`${t.path}/`);
+
+                return (
+                  <li key={t.href}>
+                    <Link
+                      href={t.href}
+                      aria-current={aktif ? "page" : undefined}
+                      onClick={() => setMenuTerbuka(false)}
+                      className="block rounded-card px-4 py-3 text-body text-ink transition-colors duration-mid ease-out hover:bg-surface-2 aria-[current=page]:bg-surface-2 aria-[current=page]:text-accent"
+                    >
+                      {t.label}
+                    </Link>
+                  </li>
+                );
+              })}
               <li className="grid grid-cols-3 gap-2 pt-1">
                 {LOCALES.map((l) => (
                   <Link

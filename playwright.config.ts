@@ -16,7 +16,7 @@ export default defineConfig({
     trace: "retain-on-failure",
   },
   webServer: {
-    command: `NEXT_PUBLIC_SITE_URL=${BASE_URL} npm run start -- --hostname 127.0.0.1 --port ${PORT}`,
+    command: `DATABASE_URL= RESEND_API_KEY= CRON_SECRET= NEXT_PUBLIC_SITE_URL=${BASE_URL} npm run start -- --hostname 127.0.0.1 --port ${PORT}`,
     url: BASE_URL,
     reuseExistingServer: true,
     timeout: 20_000,

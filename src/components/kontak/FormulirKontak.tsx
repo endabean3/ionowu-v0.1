@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import { useRef, useState, type FormEvent } from "react";
 import { CheckCircle, WarningCircle } from "@phosphor-icons/react";
 import { Button } from "@/components/ui/Button";
 import { FieldWrapper, Input, Textarea, Select } from "@/components/ui/Field";
@@ -25,6 +25,7 @@ export function FormulirKontak({ locale = "id" }: { locale?: Locale }) {
   const [status, setStatus] = useState<Status>("idle");
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [pesanKesalahan, setPesanKesalahan] = useState("");
+  const requestIdRef = useRef<string>(crypto.randomUUID());
   const c = copy[locale];
   const layanan = daftarLayanan(locale);
 
@@ -44,6 +45,7 @@ export function FormulirKontak({ locale = "id" }: { locale?: Locale }) {
     const formData = new FormData(form);
     const payload = Object.fromEntries(formData.entries());
     payload.locale = locale;
+    payload.request_id = requestIdRef.current;
 
     try {
       const res = await fetch("/api/kontak", {
@@ -62,6 +64,7 @@ export function FormulirKontak({ locale = "id" }: { locale?: Locale }) {
 
       setStatus("berhasil");
       form.reset();
+      requestIdRef.current = crypto.randomUUID();
     } catch (err) {
       // Dicatat ke konsol supaya kesalahan sungguhan (bukan cuma masalah
       // jaringan) tidak tersembunyi di balik pesan generik di bawah.

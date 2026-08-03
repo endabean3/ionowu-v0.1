@@ -1,7 +1,7 @@
 "use client";
 
 import { motion, useReducedMotion } from "motion/react";
-import { useMemo } from "react";
+import { Fragment, useMemo } from "react";
 import { ease } from "@/lib/motion";
 
 type BlurRevealProps = {
@@ -34,29 +34,29 @@ export function BlurReveal({
   const daftarKata = useMemo(() => text.split(" "), [text]);
   const Tag = motion[as];
 
-  if (kurangiGerak) {
-    const Statis = as;
-    return <Statis className={className}>{text}</Statis>;
-  }
-
   return (
     <Tag className={className}>
       {daftarKata.map((satuKata, i) => (
-        <motion.span
-          key={i}
-          className="inline-block"
-          style={{ willChange: "transform, filter, opacity" }}
-          initial={{ opacity: 0, filter: "blur(10px)", y: -24 }}
-          animate={{ opacity: 1, filter: "blur(0px)", y: 0 }}
-          transition={{
-            duration: 0.7,
-            ease: ease.out,
-            delay: delay + i * delayAntarKata,
-          }}
-        >
-          {satuKata}
-          {i < daftarKata.length - 1 ? " " : ""}
-        </motion.span>
+        <Fragment key={`${satuKata}-${i}`}>
+          <motion.span
+            className="inline-block"
+            style={{ willChange: "transform, filter, opacity" }}
+            initial={
+              kurangiGerak
+                ? { opacity: 1, filter: "blur(0px)", y: 0 }
+                : { opacity: 0, filter: "blur(10px)", y: -24 }
+            }
+            animate={{ opacity: 1, filter: "blur(0px)", y: 0 }}
+            transition={{
+              duration: kurangiGerak ? 0 : 0.7,
+              ease: ease.out,
+              delay: kurangiGerak ? 0 : delay + i * delayAntarKata,
+            }}
+          >
+            {satuKata}
+          </motion.span>
+          {i < daftarKata.length - 1 ? " " : null}
+        </Fragment>
       ))}
     </Tag>
   );

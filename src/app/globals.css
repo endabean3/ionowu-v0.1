@@ -241,6 +241,7 @@
   --focus-ring-color: var(--text-accent);
   --focus-ring-width: 2px;
   --focus-ring-offset: 3px;
+  --browser-theme-color: var(--surface-base);
 
   /* ---------- Marquee (strip teknologi berjalan) ---------- */
   --marquee-duration: 32s;
@@ -254,6 +255,46 @@
   --field-label-color: var(--text-primary);
   --field-help-color: var(--text-muted);
   --field-error-color: var(--orange-500);
+}
+
+[data-theme="light"] {
+  color-scheme: light;
+
+  /* ---------- Permukaan light ----------
+     Mode terang memakai cold neutral, bukan putih murni, supaya brand teal/navy
+     tetap terasa premium dan tidak berubah menjadi tampilan template SaaS umum. */
+  --surface-base: #f4f8fb;
+  --surface-raised: #eef4f8;
+  --surface-card: #fbfdfe;
+  --surface-line: #c6d4df;
+
+  /* ---------- Teks light ---------- */
+  --text-primary: #0a1220;
+  --text-muted: #4e6076;
+  --text-accent: #0a7778;
+
+  --action-accent: #0f8b8c;
+  --action-on-accent: #f4f8fb;
+
+  --glow-soft: 0 14px 38px -24px rgb(15 155 156 / 0.35);
+  --glow: 0 24px 70px -34px rgb(16 63 105 / 0.34);
+  --glow-signal: 0 18px 42px -24px rgb(247 122 14 / 0.45);
+  --shade-lift: 0 24px 70px -42px rgb(16 63 105 / 0.42);
+
+  --button-secondary-bg: rgb(251 253 254 / 0.74);
+  --button-secondary-border: rgb(16 63 105 / 0.2);
+  --button-ghost-bg-hover: rgb(198 212 223 / 0.35);
+
+  --card-bg: rgb(251 253 254 / 0.78);
+  --card-border: rgb(16 63 105 / 0.16);
+
+  --glass-bg: rgb(244 248 251 / 0.72);
+  --glass-border: rgb(16 63 105 / 0.13);
+
+  --field-bg: rgb(251 253 254 / 0.9);
+  --field-border: rgb(16 63 105 / 0.22);
+  --field-help-color: #5a6d82;
+  --browser-theme-color: var(--surface-base);
 }
 
 /* ============================================================================
@@ -319,6 +360,10 @@
     text-rendering: optimizeLegibility;
   }
 
+  html {
+    color-scheme: dark;
+  }
+
   /* Judul: berat 500/600 saja. 700+ terlihat murah di latar gelap. */
   h1,
   h2,
@@ -372,9 +417,13 @@
     white-space: nowrap;
     cursor: pointer;
     user-select: none;
-    transition-property: color, background-color, border-color, box-shadow;
+    transition-property: color, background-color, border-color, box-shadow, transform;
     transition-duration: var(--duration-mid);
     transition-timing-function: var(--ease-out);
+  }
+
+  .btn:active {
+    transform: scale(var(--press-scale));
   }
 
   .btn:disabled,
@@ -457,6 +506,30 @@
     border: var(--border-hairline) solid var(--glass-border);
   }
 
+  .theme-logo-light {
+    display: none;
+  }
+
+  [data-theme="light"] .theme-logo-dark {
+    display: none;
+  }
+
+  [data-theme="light"] .theme-logo-light {
+    display: block;
+  }
+
+  .theme-toggle-sun {
+    display: none;
+  }
+
+  [data-theme="dark"] .theme-toggle-moon {
+    display: none;
+  }
+
+  [data-theme="dark"] .theme-toggle-sun {
+    display: block;
+  }
+
   /* ---------- Formulir ----------
      Label di atas, teks bantu/error di bawah (dokumen 02). Placeholder
      tidak pernah dipakai sebagai pengganti label. */
@@ -531,6 +604,18 @@
     background-image:
       radial-gradient(60rem 40rem at 50% -10%, rgb(15 155 156 / 0.14), transparent 70%),
       radial-gradient(40rem 30rem at 90% 10%, rgb(16 63 105 / 0.35), transparent 70%);
+  }
+
+  [data-theme="light"] .glow-field {
+    background-image:
+      radial-gradient(52rem 34rem at 20% -8%, rgb(15 155 156 / 0.16), transparent 72%),
+      radial-gradient(42rem 30rem at 92% 8%, rgb(247 122 14 / 0.12), transparent 74%),
+      linear-gradient(180deg, rgb(251 253 254 / 0.96), rgb(244 248 251 / 0));
+  }
+
+  [data-theme="light"] .aurora-fade {
+    opacity: 0.38;
+    mix-blend-mode: multiply;
   }
 
   /* Memudarkan latar Aurora ke bawah. Efek aurora aslinya dibuat untuk
