@@ -60,7 +60,14 @@ async function consumeBucket(
   tx: postgres.TransactionSql,
   policy: BucketPolicy,
 ): Promise<ContactRateLimitResult> {
-  const expiresAt = new Date(Date.now() + policy.windowMs);
+  // String ISO, BUKAN objek Date mentah: lewat tagged template `postgres`
+  // yang dibundel Turbopack, objek Date gagal diserialisasi ("argument
+  // must be of type string... Received an instance of Date") — ketahuan
+  // lewat uji kirim formulir sungguhan, tidak muncul saat query yang sama
+  // dijalankan lewat Node polos di luar Next.js. Postgres menerima string
+  // ISO 8601 langsung sebagai literal timestamptz, jadi ini bukan akal-akalan,
+  // cuma menghindari jalur serialisasi yang bermasalah.
+  const expiresAt = new Date(Date.now() + policy.windowMs).toISOString();
   const rows = await tx<BucketRow[]>`
     INSERT INTO rate_limit_buckets (
       key,
