@@ -15,6 +15,7 @@
     "db:migrate": "drizzle-kit migrate",
     "qa:visual": "playwright test",
     "qa:lighthouse": "node scripts/run-lighthouse.mjs",
+    "qa:pipeline": "playwright test --config=playwright.pipeline.config.ts",
     "qa": "npm run check && npm run build && npm run qa:visual && npm run qa:lighthouse"
   },
   "dependencies": {
