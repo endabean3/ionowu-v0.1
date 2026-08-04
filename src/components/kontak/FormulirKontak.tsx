@@ -87,7 +87,10 @@ export function FormulirKontak({ locale = "id" }: { locale?: Locale }) {
       <div className="card flex items-start gap-4">
         <CheckCircle size={28} weight="fill" className="shrink-0 text-accent" aria-hidden />
         <div>
-          <h3 className="text-h3 text-ink">{c.form.successTitle}</h3>
+          {/* h2 supaya sejajar dengan judul "Waktu balasan" di halaman kontak —
+              keduanya anak langsung dari <h1> halaman. Kalau h3, urutan judul
+              melompat dan pembaca layar kehilangan strukturnya. */}
+          <h2 className="text-h3 text-ink">{c.form.successTitle}</h2>
           <p className="mt-2 text-ink-muted">
             {c.form.successBody}
           </p>

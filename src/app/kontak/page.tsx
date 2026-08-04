@@ -40,7 +40,12 @@ export function HalamanKontakContent({ locale }: { locale: Locale }) {
             <Card statis className="flex items-start gap-4">
               <Clock size={22} weight="light" className="mt-0.5 shrink-0 text-accent" aria-hidden />
               <div>
-                <h3 className="text-h3 text-ink">{c.pages.contact.responseTitle}</h3>
+                {/* h2, bukan h3: satu-satunya judul di bawah <h1> halaman ini.
+                    Melompat dari h1 langsung ke h3 membuat urutan judul rusak
+                    bagi pembaca layar — ketahuan lewat Lighthouse (aksesibilitas
+                    /kontak 98, audit `heading-order`). Kelas `text-h3` sengaja
+                    dipertahankan: yang berubah maknanya, bukan tampilannya. */}
+                <h2 className="text-h3 text-ink">{c.pages.contact.responseTitle}</h2>
                 <p className="mt-2 text-ink-muted">
                   {c.pages.contact.responseBody}
                 </p>
