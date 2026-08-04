@@ -82,6 +82,11 @@ export const metadata: Metadata = {
   applicationName: "Ionowu",
   manifest: "/manifest.webmanifest",
   alternates: localizedAlternates("/"),
+  // Verifikasi kepemilikan Google Search Console — metode meta tag,
+  // dipasang setelah metode file HTML sebelumnya (lihat public/google7938852ce1270306.html).
+  verification: {
+    google: "MAuoxOz_7dooEuFJSEmuvEsGg2J___3Pdpr3WDaByoI",
+  },
   icons: {
     icon: [
       { url: "/favicon-ionowu.ico", sizes: "any" },
