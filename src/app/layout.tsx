@@ -1,6 +1,5 @@
 import type { Metadata, Viewport } from "next";
 import { Space_Grotesk, Inter, JetBrains_Mono } from "next/font/google";
-import Script from "next/script";
 import { Header } from "@/components/sections/Header";
 import { Footer } from "@/components/sections/Footer";
 import { PageTransition } from "@/components/motion/PageTransition";
@@ -41,7 +40,9 @@ const themeInitScript = `
 (() => {
   try {
     const saved = localStorage.getItem("ionowu-theme");
-    const theme = saved === "dark" || saved === "light" ? saved : "light";
+    const theme = saved === "dark" || saved === "light"
+      ? saved
+      : (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
     document.documentElement.dataset.theme = theme;
     document.documentElement.style.colorScheme = theme;
   } catch {
@@ -50,9 +51,16 @@ const themeInitScript = `
   }
 })();
 `;
+// Sama dengan scriptSrc di next.config.ts (header CSP): 'unsafe-eval' hanya
+// untuk dev, dibutuhkan React untuk fitur debug (jejak error, overlay). Dulu
+// ditulis mati tanpa 'unsafe-eval' — meta tag ini yang mengatur, karena
+// browser mengambil irisan paling ketat kalau ada dua sumber CSP, jadi
+// header yang sudah benar dibatalkan lagi oleh tag ini.
 const documentCsp = [
   "default-src 'self'",
-  "script-src 'self' 'unsafe-inline'",
+  process.env.NODE_ENV === "production"
+    ? "script-src 'self' 'unsafe-inline'"
+    : "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
   "style-src 'self' 'unsafe-inline'",
   "img-src 'self' data: blob:",
   "font-src 'self'",
@@ -128,12 +136,20 @@ export default function RootLayout({
         {/* Hostinger mengganti header CSP upstream. Kebijakan dokumen ini tetap
             membatasi resource; framing dilindungi X-Frame-Options: DENY. */}
         <meta httpEquiv="Content-Security-Policy" content={documentCsp} />
+        {/* <script> mentah, BUKAN next/script (dicoba lebih dulu, terbukti gagal):
+            strategy="beforeInteractive" App Router memakai antrean
+            `self.__next_s` yang baru diproses oleh bundel JS klien yang
+            dimuat `async` — jalannya tidak dijamin sebelum cat pertama
+            layar. Dibuktikan lewat jejak sumber Next sendiri
+            (client/app-bootstrap.js: loadScriptsInSequence memakai
+            document.createElement, dipanggil dari skrip async). Tag mentah
+            di sini dieksekusi browser secara sinkron saat parsing <head>,
+            sebelum <body> mulai digambar — jadi tema tidak berkedip. */}
+        <script
+          id="ionowu-theme-init"
+          dangerouslySetInnerHTML={{ __html: themeInitScript }}
+        />
       </head>
-      <Script
-        id="ionowu-theme-init"
-        strategy="beforeInteractive"
-        dangerouslySetInnerHTML={{ __html: themeInitScript }}
-      />
       <body className="flex min-h-full flex-col bg-base text-ink">
         <LocaleHtmlSync />
         <Header />

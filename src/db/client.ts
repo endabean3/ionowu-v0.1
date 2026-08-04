@@ -9,6 +9,20 @@ declare global {
 }
 
 function connectionString() {
+  if (!process.env.DATABASE_URL) {
+    // Sengaja TIDAK dilempar sebagai error di sini — modul ini diimpor
+    // secara statis oleh rute yang harus tetap bisa membalas 503 dengan
+    // sopan kalau database belum dikonfigurasi (lihat isContactPipelineConfigured()
+    // di src/lib/leads/env.ts). Melempar error di sini akan membuat rute itu
+    // sendiri gagal dimuat, bukan cuma menolak permintaan dengan rapi.
+    // Peringatan ini supaya kalau nanti ada query yang benar-benar jalan,
+    // errornya jelas ("DATABASE_URL belum diisi") — bukan "connection
+    // refused ke 127.0.0.1" yang menyesatkan dan bisa menghabiskan waktu
+    // menelusuri masalah di server sungguhan.
+    console.error(
+      "[db] DATABASE_URL belum diisi. Query database akan gagal sampai variabel ini diisi di .env.local / setelan hosting.",
+    );
+  }
   return process.env.DATABASE_URL ?? "postgres://missing:missing@127.0.0.1:5432/missing";
 }
 

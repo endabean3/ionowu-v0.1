@@ -419,8 +419,9 @@ export async function POST(request: Request) {
       `,
   };
 
+  let intake: Awaited<ReturnType<typeof createLeadIntake>>;
   try {
-    const intake = await createLeadIntake({
+    intake = await createLeadIntake({
       requestId,
       name: nama,
       email,
@@ -432,19 +433,34 @@ export async function POST(request: Request) {
       locale,
       emailNotification: notification,
     });
-
-    const delivery = await processResendOutboxEvent(intake.outboxEventId);
-    if (!delivery.delivered) {
-      throw new Error(`outbox-delivery-${delivery.status}`);
-    }
   } catch (err) {
-    console.error("[kontak] intake lead belum selesai:", {
+    // Ini kegagalan sungguhan — lead BELUM tersimpan sama sekali. Baru di
+    // sini pantas membalas gagal, karena belum ada jejak apa pun yang bisa
+    // diselamatkan cron.
+    console.error("[kontak] gagal menyimpan lead:", {
       code: err instanceof Error ? err.message : "unknown",
     });
     return NextResponse.json(
       { ok: false, error: teksApi.notReady },
       { status: 503 },
     );
+  }
+
+  // Lead dan event outbox-nya sudah tersimpan aman dalam satu transaksi
+  // (createLeadIntake) — pengunjung sudah boleh dianggap berhasil sejak
+  // titik ini. Percobaan kirim di bawah cuma usaha cepat supaya email
+  // sampai tanpa menunggu jadwal cron; kalau gagal atau lambat, cron
+  // (/api/cron/outbox) yang mengulang sampai 5 kali. Pengunjung TIDAK
+  // boleh disuruh menunggu atau dianggap gagal hanya karena percobaan
+  // pertama ini belum berhasil — dulu begitu, dan rate limit yang sudah
+  // terlanjur dipakai di atas bisa mengunci pengunjung 1 jam kalau ia
+  // mengulang kirim padahal pesannya sudah aman tersimpan sejak awal.
+  try {
+    await processResendOutboxEvent(intake.outboxEventId);
+  } catch (err) {
+    console.error("[kontak] percobaan kirim email pertama gagal, cron akan mencoba ulang:", {
+      code: err instanceof Error ? err.message : "unknown",
+    });
   }
 
   return NextResponse.json({ ok: true });

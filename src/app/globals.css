@@ -60,6 +60,16 @@
    ============================================================================ */
 
 :root {
+  /* Gelap adalah bawaan (token di bawah semuanya nilai navy gelap).
+     Ditulis di sini, TIDAK di dalam @layer base — supaya satu-satunya
+     sumber color-scheme ada di luar sistem layer, sejajar dengan
+     [data-theme="light"] di bawah. Aturan tanpa @layer selalu menang atas
+     aturan di dalam @layer terlepas urutan penulisan, jadi dua sumber di
+     tempat berbeda (dulu: satu di sini via :root tersirat, satu lagi di
+     `@layer base > html`) gampang saling tumpang tindih diam-diam kalau
+     urutan @layer suatu saat diubah. */
+  color-scheme: dark;
+
   /* ---------- Permukaan ---------- */
   --surface-base: var(--navy-950); /* latar halaman */
   --surface-raised: var(--navy-900); /* bagian yang sedikit terangkat */
@@ -358,10 +368,6 @@
     line-height: 1.7;
     -webkit-font-smoothing: antialiased;
     text-rendering: optimizeLegibility;
-  }
-
-  html {
-    color-scheme: dark;
   }
 
   /* Judul: berat 500/600 saja. 700+ terlihat murah di latar gelap. */

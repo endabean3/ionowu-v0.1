@@ -53,6 +53,29 @@ function retryDelayMs(attempts: number) {
   return minutes * 60 * 1000;
 }
 
+const RESEND_TIMEOUT_MS = 8000;
+
+/** SDK Resend tidak punya opsi `signal`/timeout sendiri, jadi permintaan
+ * dibatasi di sini. Kalau Resend lambat, pemanggil (permintaan HTTP
+ * /api/kontak) tidak ikut menggantung tanpa batas — request Resend yang
+ * sudah terlanjur jalan di background tetap boleh selesai sendiri, event
+ * outbox-nya akan dicoba lagi oleh cron kalau ternyata gagal. */
+function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
+  return new Promise((resolve, reject) => {
+    const timer = setTimeout(() => reject(new Error("resend-timeout")), ms);
+    promise.then(
+      (value) => {
+        clearTimeout(timer);
+        resolve(value);
+      },
+      (err) => {
+        clearTimeout(timer);
+        reject(err);
+      },
+    );
+  });
+}
+
 async function claimOutboxEvents(limit: number): Promise<ClaimedEvent[]> {
   const rows = await sqlClientRaw`
     UPDATE outbox_events
@@ -132,6 +155,23 @@ async function markFailedOrRetry(
     .where(eq(outboxEvents.id, event.id));
 }
 
+/** Untuk kegagalan yang tidak mungkin membaik lewat percobaan ulang (mis.
+ * payload rusak) — langsung `failed`, tidak ikut antre `retry_wait` sampai
+ * `max_attempts` habis seperti kegagalan pengiriman biasa. */
+async function markTerminalFailure(event: ClaimedEvent, errorCode: string) {
+  await db
+    .update(outboxEvents)
+    .set({
+      status: "failed",
+      attempts: event.attempts + 1,
+      lockedAt: null,
+      lastErrorCode: errorCode.slice(0, 120),
+      nextAttemptAt: new Date(),
+      updatedAt: new Date(),
+    })
+    .where(eq(outboxEvents.id, event.id));
+}
+
 async function processClaimedEvents(events: ClaimedEvent[]) {
   const apiKey = process.env.RESEND_API_KEY;
   if (!apiKey) {
@@ -147,19 +187,22 @@ async function processClaimedEvents(events: ClaimedEvent[]) {
     const notification = getEmailNotification(event.payload);
 
     if (!notification) {
-      await markFailedOrRetry(event, "invalid_payload");
+      await markTerminalFailure(event, "invalid_payload");
       failed += 1;
       continue;
     }
 
     try {
-      const { error } = await resend.emails.send({
-        from: notification.from,
-        to: notification.to,
-        replyTo: notification.replyTo,
-        subject: notification.subject,
-        html: notification.html,
-      });
+      const { error } = await withTimeout(
+        resend.emails.send({
+          from: notification.from,
+          to: notification.to,
+          replyTo: notification.replyTo,
+          subject: notification.subject,
+          html: notification.html,
+        }),
+        RESEND_TIMEOUT_MS,
+      );
 
       if (error) {
         await markFailedOrRetry(event, "resend_rejected");

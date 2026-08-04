@@ -32,7 +32,12 @@ export async function upsertAdminUser(input: {
     .onConflictDoUpdate({
       target: users.email,
       set: {
-        name: input.name ?? null,
+        // `name` HANYA ikut ditulis kalau Google benar-benar mengirimnya.
+        // Google tidak selalu menyertakan `name` di setiap login — kalau
+        // field ini selalu diikutkan dengan `?? null`, satu kali saja
+        // Google tidak mengirim nama, nama yang sudah tersimpan tertimpa
+        // jadi kosong.
+        ...(input.name ? { name: input.name } : {}),
         lastLoginAt: new Date(),
         updatedAt: new Date(),
       },

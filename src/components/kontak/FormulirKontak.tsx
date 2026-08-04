@@ -25,7 +25,15 @@ export function FormulirKontak({ locale = "id" }: { locale?: Locale }) {
   const [status, setStatus] = useState<Status>("idle");
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [pesanKesalahan, setPesanKesalahan] = useState("");
-  const requestIdRef = useRef<string>(crypto.randomUUID());
+  // Pola inisialisasi malas untuk useRef: crypto.randomUUID() di argumen
+  // useRef() dihitung ulang di SETIAP render meski hasilnya cuma dipakai
+  // sekali — nilainya langsung dibuang React kalau ref sudah terisi. Cek
+  // `=== null` di bawah memastikan randomUUID() hanya benar-benar
+  // dipanggil sekali, saat pertama kali komponen dirender.
+  const requestIdRef = useRef<string | null>(null);
+  if (requestIdRef.current === null) {
+    requestIdRef.current = crypto.randomUUID();
+  }
   const c = copy[locale];
   const layanan = daftarLayanan(locale);
 
@@ -45,7 +53,7 @@ export function FormulirKontak({ locale = "id" }: { locale?: Locale }) {
     const formData = new FormData(form);
     const payload = Object.fromEntries(formData.entries());
     payload.locale = locale;
-    payload.request_id = requestIdRef.current;
+    payload.request_id = requestIdRef.current!;
 
     try {
       const res = await fetch("/api/kontak", {

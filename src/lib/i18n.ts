@@ -49,6 +49,10 @@ export function localizedAlternates(path: string) {
       id: withLocale(path, "id"),
       en: withLocale(path, "en"),
       "zh-CN": withLocale(path, "zh"),
+      // Dibaca mesin pencari untuk pengunjung yang bahasanya tidak cocok
+      // satu pun di atas — tanpa ini, Google tidak tahu versi mana yang
+      // jadi cadangan. Samakan dengan bahasa bawaan situs (DEFAULT_LOCALE).
+      "x-default": withLocale(path, DEFAULT_LOCALE),
     },
   };
 }

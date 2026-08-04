@@ -7,6 +7,14 @@ if (!process.env.AUTH_URL && process.env.NODE_ENV === "production") {
   process.env.AUTH_URL = "https://ionowu.com";
 }
 
+/* Callback jwt() dulu memanggil getAdminUserByEmail() di SETIAP permintaan
+   ke /admin (proxy.ts memanggil auth() tiap request). Database dibebani
+   tanpa perlu, dan kalau database sedang mati, semua admin langsung
+   terkunci keluar. Sekarang role hanya dicek ulang tiap 5 menit — status
+   nonaktif/role berubah tetap kepakai dalam waktu wajar, tapi tidak
+   query di setiap klik. */
+const ROLE_RECHECK_INTERVAL_MS = 5 * 60 * 1000;
+
 export const { handlers, auth, signIn, signOut } = NextAuth({
   trustHost: Boolean(process.env.AUTH_URL) || process.env.NODE_ENV !== "production",
   session: {
@@ -35,12 +43,21 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 
       return user?.status === "active";
     },
-    async jwt({ token }) {
+    async jwt({ token, trigger }) {
       if (!token.email) return token;
 
       if (!isAllowedAdminEmail(token.email)) {
         delete token.userId;
         delete token.role;
+        delete token.roleCheckedAt;
+        return token;
+      }
+
+      const isFresh =
+        typeof token.roleCheckedAt === "number" &&
+        Date.now() - token.roleCheckedAt < ROLE_RECHECK_INTERVAL_MS;
+
+      if (trigger !== "signIn" && isFresh && token.userId) {
         return token;
       }
 
@@ -52,6 +69,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         delete token.userId;
         delete token.role;
       }
+      token.roleCheckedAt = Date.now();
 
       return token;
     },
