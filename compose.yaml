@@ -24,7 +24,10 @@ x-hardening: &hardening
   cap_drop:
     - ALL
   logging:
-    driver: json-file
+    # RUN-16 — driver `local` (biner, terkompresi) lebih hemat CPU dan IOPS.
+    # Pada host tunggal, IOPS adalah sumber daya bersama yang tidak tercakup
+    # limit CPU/memori.
+    driver: local
     options:
       max-size: "10m"
       max-file: "3"
@@ -33,18 +36,19 @@ services:
   # --- Aplikasi web (satu-satunya yang menghadap publik) -------------------
   web:
     <<: *hardening
-    image: ${IMAGE:-ghcr.io/ionowu/ionowu-web}:${IMAGE_TAG:-latest}
+    # DEP-01/IMG-09 — deploy WAJIB memakai digest, bukan tag. Sintaks `:?`
+    # membuat deploy gagal seketika bila digest tidak disetel: aturannya
+    # ditegakkan Compose sendiri, bukan kedisiplinan operator.
+    image: ${IMAGE:-ghcr.io/ionowu/ionowu-web}@${IMAGE_DIGEST:?digest wajib — ambil dari keluaran CI}
     # UID 65532 sudah dipasang di Dockerfile (RUN-01); ditegaskan lagi di sini
     # supaya salah konfigurasi di sisi orkestrator ikut ketahuan.
     user: "65532:65532"
     read_only: true
     depends_on:
+      # DEP-13 — postgres dan redis tidak lagi di stack ini; keduanya di
+      # proyek bersama `ionowu-data`. Yang tersisa hanya urutan ke migrasi.
       migrate:
         condition: service_completed_successfully
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
     environment:
       NODE_ENV: production
       PORT: "3000"
@@ -78,7 +82,7 @@ services:
       # Cache ISR Next.js; boleh hilang tanpa kehilangan data (backup: none).
       - web-cache:/app/.next/cache
     networks:
-      - internal
+      - data
       - dokploy-network
     healthcheck:
       test: ["CMD", "/nodejs/bin/node", "docker/healthcheck.mjs"]
@@ -114,17 +118,19 @@ services:
   # migrasi yang gagal berhenti sebagai kegagalan yang terlihat, bukan
   # berputar diam-diam.
   migrate:
-    image: ${IMAGE:-ghcr.io/ionowu/ionowu-web}-migrate:${IMAGE_TAG:-latest}
+    image: ${IMAGE:-ghcr.io/ionowu/ionowu-web}-migrate@${MIGRATE_DIGEST:?digest wajib — ambil dari keluaran CI}
     user: "65532:65532"
     read_only: true
     restart: "no"
+    logging:
+      driver: local                      # RUN-16
+      options:
+        max-size: "10m"
+        max-file: "3"
     security_opt:
       - no-new-privileges:true
     cap_drop:
       - ALL
-    depends_on:
-      postgres:
-        condition: service_healthy
     environment:
       NODE_ENV: production
       # Migrasi memakai role owner; runtime TIDAK boleh memakai URL ini.
@@ -133,103 +139,34 @@ services:
     tmpfs:
       - /tmp:size=32m,mode=1777
     networks:
-      - internal
+      - data
     deploy:
       resources:
         limits:
           cpus: "0.5"
           memory: 256M
 
-  # --- Postgres khusus aplikasi (ISO-08) -----------------------------------
-  # Kalau memakai Postgres terkelola (Neon/Supabase), hapus service ini dan
-  # arahkan DATABASE_URL ke sana — sisa file tidak perlu berubah.
-  postgres:
-    <<: *hardening
-    # IMG-02 — image pihak ketiga ikut dikunci ke digest, sama seperti base
-    # image di Dockerfile. Tag `17-alpine` sendiri bisa berpindah kapan saja.
-    image: postgres:17-alpine@sha256:18cfe3ef5e6815560c98237d6216d1e5119702fb0f3894c8785dd58b8bbe5d73
-    user: "70:70"
-    environment:
-      POSTGRES_DB: ${POSTGRES_DB:-ionowu_web}
-      POSTGRES_USER: ${POSTGRES_USER:-ionowu_web_owner}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-      POSTGRES_INITDB_ARGS: "--data-checksums"
-    volumes:
-      - postgres-data:/var/lib/postgresql/data
-    networks:
-      - internal
-    healthcheck:
-      test:
-        ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-ionowu_web_owner} -d ${POSTGRES_DB:-ionowu_web}"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 20s
-    deploy:
-      resources:
-        limits:
-          cpus: "1.0"
-          memory: 1G
-        reservations:
-          cpus: "0.25"
-          memory: 512M
-
-  # --- Redis khusus aplikasi (ISO-09) --------------------------------------
-  redis:
-    <<: *hardening
-    image: redis:7-alpine@sha256:ff02b58f971e7d7d156a1267e283fcbbeee91773b6aa36c49dac28ecfe28eadf
-    user: "999:999"
-    command:
-      - redis-server
-      - --appendonly
-      - "yes"
-      - --databases
-      - "16"
-      - --maxmemory
-      - 128mb
-      - --maxmemory-policy
-      - allkeys-lru
-    volumes:
-      - redis-data:/data
-    networks:
-      - internal
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 10s
-      timeout: 3s
-      retries: 5
-    deploy:
-      resources:
-        limits:
-          cpus: "0.5"
-          memory: 192M
+  # --- Postgres & Redis: TIDAK di stack ini (DEP-13) -----------------------
+  # Keduanya berjalan di proyek Dokploy `ionowu-data` sebagai cluster bersama
+  # seluruh aplikasi (ADR-015). Menjalankan instans sendiri per aplikasi
+  # melipatgandakan baseline 150-250 MB tanpa menambah isolasi: ISO-08 menuntut
+  # database, role, dan kredensial yang TERPISAH, bukan proses yang terpisah.
+  #
+  # Aplikasi menjangkaunya lewat jaringan `ionowu-data`, selalu melalui
+  # PgBouncer (DAT-09) — tidak pernah langsung ke Postgres.
 
 networks:
-  # ISO-04 — jaringan privat aplikasi. `internal: true` memutus akses keluar
-  # sehingga postgres dan redis benar-benar tidak bisa dijangkau dari luar.
-  internal:
-    name: ionowu-web-internal
-    internal: true
+  # ISO-04/ISO-06 — jaringan lapisan data bersama, dibuat sekali oleh proyek
+  # `ionowu-data`. Stack ini hanya bergabung, tidak pernah membuatnya.
+  data:
+    name: ionowu-data
+    external: true
   # Jaringan bersama Dokploy; dibuat di luar stack ini.
   dokploy-network:
     external: true
 
 volumes:
   # DAT-04 — label cakupan backup dibaca oleh penjadwal backup server.
-  postgres-data:
-    name: ionowu-web-postgres-data
-    labels:
-      ionowu.backup: "true"
-      ionowu.backup.scope: daily
-      ionowu.backup.retention-days: "30"
-      ionowu.app: ionowu-web
-  redis-data:
-    name: ionowu-web-redis-data
-    labels:
-      ionowu.backup: "true"
-      ionowu.backup.scope: daily
-      ionowu.backup.retention-days: "7"
-      ionowu.app: ionowu-web
   web-cache:
     name: ionowu-web-next-cache
     labels:
