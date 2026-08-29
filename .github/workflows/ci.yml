@@ -155,7 +155,7 @@ jobs:
 
       - name: Pasang cosign
         if: github.event_name != 'pull_request'
-        uses: sigstore/cosign-installer@v4
+        uses: sigstore/cosign-installer@v4.1.2
 
       - name: Tanda tangani image (IMG-12)
         if: github.event_name != 'pull_request'
