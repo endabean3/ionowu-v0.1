@@ -30,6 +30,8 @@ const securityHeaders = [
 ];
 
 const nextConfig: NextConfig = {
+  // Wajib untuk image runtime ramping (Standar Ionowu §4.3, IMG-05)
+  output: "standalone",
   poweredByHeader: false,
   async headers() {
     return [

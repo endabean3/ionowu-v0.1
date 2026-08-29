@@ -1,0 +1,73 @@
+# Standar Ionowu §4.7 — CI membangun, memindai, menandatangani, mendorong.
+# Deploy & migrasi TIDAK dijalankan dari runner: basis data tidak terekspos
+# ke internet (NET-03), sehingga runner tidak dapat menjangkaunya (§3.12).
+name: build
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: docker/setup-qemu-action@v3
+      - uses: docker/setup-buildx-action@v3
+
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: IMG-01/IMG-10 — build multi-stage, amd64
+        id: build
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          platforms: linux/amd64
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: ghcr.io/${{ github.repository }}:${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          provenance: true
+          sbom: true
+
+      - name: IMG-05 — ambang ukuran image
+        if: github.event_name != 'pull_request'
+        run: |
+          docker pull -q ghcr.io/${{ github.repository }}:${{ github.sha }}
+          BYTES=$(docker image inspect ghcr.io/${{ github.repository }}:${{ github.sha }} --format '{{.Size}}')
+          MB=$((BYTES/1024/1024))
+          echo "ukuran image: ${MB} MB (ambang Node: 300 MB)"
+          [ "$MB" -le 300 ] || { echo "::error::melebihi ambang IMG-05"; exit 1; }
+
+      - name: SEC-01 — pindai kerentanan
+        if: github.event_name != 'pull_request'
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: ghcr.io/${{ github.repository }}:${{ github.sha }}
+          severity: HIGH,CRITICAL
+          exit-code: "1"
+
+      - name: IMG-12 — tandatangani image
+        if: github.event_name != 'pull_request'
+        run: |
+          curl -sSfL https://github.com/sigstore/cosign/releases/latest/download/cosign-linux-amd64 \
+            -o /usr/local/bin/cosign && chmod +x /usr/local/bin/cosign
+          cosign sign --yes ghcr.io/${{ github.repository }}@${{ steps.build.outputs.digest }}
+
+      - name: DEP-01 — laporkan digest untuk deploy
+        if: github.event_name != 'pull_request'
+        run: |
+          echo "### Digest untuk deploy" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          echo "ghcr.io/${{ github.repository }}@${{ steps.build.outputs.digest }}" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
