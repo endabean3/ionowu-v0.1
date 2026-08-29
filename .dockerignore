@@ -1,0 +1,43 @@
+# IMG-06 — pangkas konteks build: makin kecil konteks, makin cepat build dan
+# makin kecil peluang rahasia ikut tersalin ke layer image.
+
+.git
+.github
+.gitignore
+
+node_modules
+.next
+out
+build
+dist
+
+# rahasia — tidak boleh pernah masuk konteks build
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# artefak QA
+test-results
+playwright-report
+tests
+tests-pipeline
+playwright.config.ts
+playwright.pipeline.config.ts
+lighthouse-report*
+coverage
+
+# dokumen & tooling lokal
+docs
+README.md
+AGENTS.md
+CLAUDE.md
+.vscode
+.idea
+.DS_Store
+*.log
+compose.yaml
+compose.*.yaml
+Dockerfile
+.dockerignore

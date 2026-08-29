@@ -1,0 +1,116 @@
+{
+  "uid": "ionowu-web",
+  "title": "Ionowu Web",
+  "tags": ["ionowu", "ionowu-web"],
+  "timezone": "Asia/Jakarta",
+  "schemaVersion": 39,
+  "refresh": "1m",
+  "time": { "from": "now-6h", "to": "now" },
+  "templating": {
+    "list": [
+      {
+        "name": "datasource",
+        "type": "datasource",
+        "query": "prometheus",
+        "current": {}
+      }
+    ]
+  },
+  "panels": [
+    {
+      "id": 1,
+      "type": "stat",
+      "title": "Readiness (/health/ready)",
+      "description": "0 = gagal. Alert IonowuWebTidakSiap menyala setelah 2 menit di angka 0.",
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "gridPos": { "h": 5, "w": 6, "x": 0, "y": 0 },
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [
+            { "type": "value", "options": { "0": { "text": "GAGAL", "color": "red" }, "1": { "text": "SIAP", "color": "green" } } }
+          ]
+        }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "probe_success{job=\"blackbox\", instance=~\".*ionowu.com/health/ready\"}"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "type": "timeseries",
+      "title": "Waktu respons readiness",
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "gridPos": { "h": 5, "w": 9, "x": 6, "y": 0 },
+      "fieldConfig": { "defaults": { "unit": "s" } },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "probe_duration_seconds{job=\"blackbox\", instance=~\".*ionowu.com/health/ready\"}",
+          "legendFormat": "readiness"
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "type": "stat",
+      "title": "Sertifikat TLS tersisa",
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "gridPos": { "h": 5, "w": 9, "x": 15, "y": 0 },
+      "fieldConfig": { "defaults": { "unit": "d" } },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "(probe_ssl_earliest_cert_expiry{job=\"blackbox\", instance=~\".*ionowu.com.*\"} - time()) / 86400"
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "type": "timeseries",
+      "title": "Memori per kontainer (terhadap batas RUN-05)",
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 5 },
+      "fieldConfig": { "defaults": { "unit": "percentunit", "max": 1 } },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "container_memory_working_set_bytes{container_label_com_docker_compose_project=\"ionowu-web\"} / container_spec_memory_limit_bytes{container_label_com_docker_compose_project=\"ionowu-web\"}",
+          "legendFormat": "{{name}}"
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "type": "timeseries",
+      "title": "CPU per kontainer",
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 5 },
+      "fieldConfig": { "defaults": { "unit": "percentunit" } },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "rate(container_cpu_usage_seconds_total{container_label_com_docker_compose_project=\"ionowu-web\"}[5m])",
+          "legendFormat": "{{name}}"
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "type": "timeseries",
+      "title": "Restart kontainer",
+      "description": "Lonjakan di sini berarti crash loop — lihat alert IonowuWebSeringRestart.",
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "gridPos": { "h": 7, "w": 24, "x": 0, "y": 13 },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "changes(container_start_time_seconds{container_label_com_docker_compose_project=\"ionowu-web\"}[15m])",
+          "legendFormat": "{{name}}"
+        }
+      ]
+    }
+  ]
+}

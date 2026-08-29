@@ -8,6 +8,7 @@ import {
 } from "@/lib/leads/rate-limit";
 import { processResendOutboxEvent } from "@/lib/outbox/resend";
 import { isLocale, type Locale } from "@/lib/i18n";
+import { errorFields, log } from "@/lib/observability/log";
 
 /* ============================================================
    PENERIMA FORMULIR KONTAK
@@ -24,7 +25,7 @@ import { isLocale, type Locale } from "@/lib/i18n";
    1. Daftar akun di resend.com (ini langkah yang HARUS dilakukan Nolan
       sendiri — bukan sesuatu yang bisa dibuatkan).
    2. Buat API key di dashboard Resend, isi ke `.env.local` sebagai
-      `RESEND_API_KEY=...` (lihat `.env.local.example`).
+      `RESEND_API_KEY=...` (lihat `.env.example`).
    3. Isi `DATABASE_URL`, jalankan migration, lalu pasang pemanggil cron.
    4. Alamat pengirim (`ALAMAT_DARI` di bawah) masih memakai domain uji
       bawaan Resend (`onboarding@resend.dev`) — ini hanya bisa mengirim ke
@@ -381,8 +382,9 @@ export async function POST(request: Request) {
       ip: trustedClientIp(request),
     });
   } catch (err) {
-    console.error("[kontak] rate limit tidak tersedia:", {
-      code: err instanceof Error ? err.message : "unknown",
+    log.error("kontak.rate_limit_tidak_tersedia", {
+      request_id: requestId,
+      ...errorFields(err),
     });
     return NextResponse.json(
       { ok: false, error: teksApi.notReady },
@@ -437,8 +439,9 @@ export async function POST(request: Request) {
     // Ini kegagalan sungguhan — lead BELUM tersimpan sama sekali. Baru di
     // sini pantas membalas gagal, karena belum ada jejak apa pun yang bisa
     // diselamatkan cron.
-    console.error("[kontak] gagal menyimpan lead:", {
-      code: err instanceof Error ? err.message : "unknown",
+    log.error("kontak.lead_gagal_disimpan", {
+      request_id: requestId,
+      ...errorFields(err),
     });
     return NextResponse.json(
       { ok: false, error: teksApi.notReady },
@@ -458,8 +461,10 @@ export async function POST(request: Request) {
   try {
     await processResendOutboxEvent(intake.outboxEventId);
   } catch (err) {
-    console.error("[kontak] percobaan kirim email pertama gagal, cron akan mencoba ulang:", {
-      code: err instanceof Error ? err.message : "unknown",
+    log.warn("kontak.email_percobaan_pertama_gagal", {
+      request_id: requestId,
+      outbox_event_id: intake.outboxEventId,
+      ...errorFields(err),
     });
   }
 

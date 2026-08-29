@@ -1,8 +1,9 @@
 import "server-only";
 
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { db } from "@/db/client";
 import { users, type adminRole } from "@/db/schema";
+import { currentTenantId } from "@/db/tenant";
 
 export type AdminRole = (typeof adminRole.enumValues)[number];
 
@@ -20,9 +21,11 @@ export async function upsertAdminUser(input: {
   defaultRole?: AdminRole;
 }): Promise<AdminUser | null> {
   const email = input.email.trim().toLowerCase();
+  const tenantId = currentTenantId();
   const [user] = await db
     .insert(users)
     .values({
+      tenantId,
       email,
       name: input.name ?? null,
       role: input.defaultRole ?? "viewer",
@@ -30,7 +33,7 @@ export async function upsertAdminUser(input: {
       lastLoginAt: new Date(),
     })
     .onConflictDoUpdate({
-      target: users.email,
+      target: [users.tenantId, users.email],
       set: {
         // `name` HANYA ikut ditulis kalau Google benar-benar mengirimnya.
         // Google tidak selalu menyertakan `name` di setiap login — kalau
@@ -63,7 +66,12 @@ export async function getAdminUserByEmail(email: string): Promise<AdminUser | nu
       status: users.status,
     })
     .from(users)
-    .where(eq(users.email, email.trim().toLowerCase()))
+    .where(
+      and(
+        eq(users.tenantId, currentTenantId()),
+        eq(users.email, email.trim().toLowerCase()),
+      ),
+    )
     .limit(1);
 
   return user ?? null;

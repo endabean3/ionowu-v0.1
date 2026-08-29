@@ -1,0 +1,168 @@
+# IMG-12 / SEC-01 — pipeline wajib: membangun, memindai, lalu menandatangani.
+#
+# Urutannya sengaja berantai: image TIDAK pernah didorong ke registry sebelum
+# Trivy lulus, dan TIDAK pernah dianggap siap deploy sebelum ditandatangani.
+name: CI
+
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository_owner }}/ionowu-web
+
+jobs:
+  # --- Gerbang mutu kode --------------------------------------------------
+  check:
+    name: Typecheck, lint, token
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: npm
+      - run: npm ci
+      - run: npm run check
+      - run: npm run db:check
+      # Migrasi berikutnya tidak boleh lahir dari baseline kosong, jadi
+      # snapshot Drizzle wajib ikut ter-commit. Kalau `db:generate` masih
+      # menghasilkan perubahan, berarti ada yang lupa di-commit.
+      - name: Pastikan snapshot migrasi sudah ter-commit
+        run: |
+          npm run db:generate
+          if [ -n "$(git status --porcelain drizzle)" ]; then
+            echo "Ada migrasi/snapshot Drizzle yang belum di-commit:"
+            git status --porcelain drizzle
+            exit 1
+          fi
+
+  # --- Audit dependensi ---------------------------------------------------
+  audit:
+    name: Audit dependensi
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: npm
+      - run: npm ci
+      - run: npm audit --audit-level=high
+
+  # --- Build, pindai, tanda tangani ---------------------------------------
+  image:
+    name: Build, scan, sign
+    needs: [check, audit]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+      id-token: write # OIDC untuk cosign keyless
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: docker/setup-buildx-action@v3
+
+      - name: Metadata image
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=sha,format=long
+            type=ref,event=branch
+            type=semver,pattern={{version}}
+
+      # Build lokal dulu supaya Trivy memindai artefak yang PERSIS akan
+      # didorong — bukan image lain yang kebetulan dibangun ulang.
+      - name: Build image (belum didorong)
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          target: runner
+          load: true
+          tags: ionowu-web:ci
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Verifikasi kontainer berjalan sebagai UID 65532 (RUN-01)
+        run: |
+          uid="$(docker inspect --format '{{.Config.User}}' ionowu-web:ci)"
+          echo "Config.User = ${uid}"
+          [ "${uid}" = "65532:65532" ] || { echo "Kontainer tidak berjalan sebagai 65532"; exit 1; }
+
+      - name: Verifikasi ukuran image terhadap ambang (IMG-05)
+        run: |
+          bytes="$(docker image inspect ionowu-web:ci --format '{{.Size}}')"
+          mb=$(( bytes / 1024 / 1024 ))
+          echo "Ukuran image: ${mb} MB (ambang: ${IMAGE_SIZE_LIMIT_MB} MB)"
+          [ "${mb}" -le "${IMAGE_SIZE_LIMIT_MB}" ] || { echo "Image melewati ambang"; exit 1; }
+        env:
+          IMAGE_SIZE_LIMIT_MB: "400"
+
+      - name: Trivy — tanpa temuan HIGH/CRITICAL (SEC-01)
+        uses: aquasecurity/trivy-action@0.28.0
+        with:
+          image-ref: ionowu-web:ci
+          format: table
+          exit-code: "1"
+          ignore-unfixed: true
+          vuln-type: os,library
+          severity: HIGH,CRITICAL
+
+      - name: Login ke registry
+        if: github.event_name != 'pull_request'
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Dorong image
+        if: github.event_name != 'pull_request'
+        id: push
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          target: runner
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+
+      - name: Build & dorong image migrasi (DAT-05)
+        if: github.event_name != 'pull_request'
+        id: push_migrate
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          target: migrator
+          push: true
+          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-migrate:${{ github.sha }}
+          cache-from: type=gha
+
+      - name: Pasang cosign
+        if: github.event_name != 'pull_request'
+        uses: sigstore/cosign-installer@v3
+
+      - name: Tanda tangani image (IMG-12)
+        if: github.event_name != 'pull_request'
+        env:
+          COSIGN_EXPERIMENTAL: "1"
+        run: |
+          cosign sign --yes \
+            "${REGISTRY}/${IMAGE_NAME}@${{ steps.push.outputs.digest }}"
+          cosign sign --yes \
+            "${REGISTRY}/${IMAGE_NAME}-migrate@${{ steps.push_migrate.outputs.digest }}"

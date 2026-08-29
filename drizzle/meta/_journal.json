@@ -15,6 +15,13 @@
       "when": 1785771129634,
       "tag": "0001_bored_ravenous",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1788008965187,
+      "tag": "0002_overconfident_gorgon",
+      "breakpoints": true
     }
   ]
 }

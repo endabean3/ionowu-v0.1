@@ -30,6 +30,10 @@ const securityHeaders = [
 ];
 
 const nextConfig: NextConfig = {
+  // Wajib untuk image kontainer: build menghasilkan .next/standalone berisi
+  // server.js plus subset node_modules yang benar-benar dipakai, sehingga
+  // stage runtime tidak perlu npm sama sekali (lihat Dockerfile, IMG-01/IMG-05).
+  output: "standalone",
   poweredByHeader: false,
   async headers() {
     return [

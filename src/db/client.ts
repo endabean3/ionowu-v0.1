@@ -3,6 +3,7 @@ import "server-only";
 import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
 import * as schema from "@/db/schema";
+import { log } from "@/lib/observability/log";
 
 declare global {
   var ionowuSql: postgres.Sql | undefined;
@@ -19,9 +20,10 @@ function connectionString() {
     // errornya jelas ("DATABASE_URL belum diisi") — bukan "connection
     // refused ke 127.0.0.1" yang menyesatkan dan bisa menghabiskan waktu
     // menelusuri masalah di server sungguhan.
-    console.error(
-      "[db] DATABASE_URL belum diisi. Query database akan gagal sampai variabel ini diisi di .env.local / setelan hosting.",
-    );
+    log.error("db.database_url_kosong", {
+      detail:
+        "Query database akan gagal sampai DATABASE_URL diisi lewat secret manager / .env.local.",
+    });
   }
   return process.env.DATABASE_URL ?? "postgres://missing:missing@127.0.0.1:5432/missing";
 }

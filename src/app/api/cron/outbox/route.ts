@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { processResendOutbox } from "@/lib/outbox/resend";
+import { errorFields, log } from "@/lib/observability/log";
 
 export const runtime = "nodejs";
 
@@ -22,9 +23,7 @@ export async function POST(request: Request) {
     const result = await processResendOutbox(Number.isFinite(limit) ? limit : 10);
     return NextResponse.json({ ok: true, ...result });
   } catch (err) {
-    console.error("[outbox] gagal memproses batch:", {
-      code: err instanceof Error ? err.message : "unknown",
-    });
+    log.error("outbox.batch_gagal", errorFields(err));
     return NextResponse.json({ ok: false }, { status: 503 });
   }
 }

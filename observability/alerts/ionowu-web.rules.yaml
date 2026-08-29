@@ -1,0 +1,81 @@
+# OBS-05 / OBS-08 — aturan alert Prometheus untuk `ionowu-web`.
+#
+# Setiap alert WAJIB menunjuk runbook (OBS-08); anotasi `runbook_url` di bawah
+# mengarah ke bagian yang relevan di docs/runbook.md.
+#
+# Alert di file ini sengaja hanya memakai metrik yang pasti ada di server:
+#   - `probe_*` dari blackbox_exporter
+#   - `container_*` dari cAdvisor
+# Metrik dari dalam aplikasi (OTLP) ikut terkirim ke kolektor, tetapi namanya
+# bergantung pada konfigurasi kolektor masing-masing lingkungan, jadi tidak
+# dijadikan dasar alert di sini supaya tidak ada alert yang diam-diam tidak
+# pernah menyala.
+#
+# Target scrape yang harus ada di Prometheus:
+#   blackbox: https://ionowu.com/health/ready  (modul http_2xx)
+#   cadvisor: seluruh kontainer di host
+
+groups:
+  - name: ionowu-web
+    rules:
+      - alert: IonowuWebTidakSiap
+        expr: probe_success{job="blackbox", instance=~".*ionowu.com/health/ready"} == 0
+        for: 2m
+        labels:
+          severity: critical
+          app: ionowu-web
+        annotations:
+          summary: "ionowu-web tidak lolos readiness lebih dari 2 menit"
+          description: >-
+            /health/ready membalas gagal. Situs publik kemungkinan besar sedang
+            tidak melayani permintaan, atau database tidak bisa dihubungi.
+          runbook_url: https://github.com/endabean3/ionowu-v0.1/blob/main/docs/runbook.md#ionowuwebtidaksiap
+
+      - alert: IonowuWebLambat
+        expr: probe_duration_seconds{job="blackbox", instance=~".*ionowu.com/health/ready"} > 3
+        for: 10m
+        labels:
+          severity: warning
+          app: ionowu-web
+        annotations:
+          summary: "Readiness ionowu-web lambat (>3 detik)"
+          description: >-
+            Probe masih lulus tetapi lambat. Biasanya database yang mulai
+            tersendat sebelum benar-benar gagal.
+          runbook_url: https://github.com/endabean3/ionowu-v0.1/blob/main/docs/runbook.md#ionowuweblambat
+
+      - alert: IonowuWebSeringRestart
+        expr: |
+          increase(container_start_time_seconds{container_label_com_docker_compose_project="ionowu-web"}[15m]) > 0
+          and on(name) changes(container_start_time_seconds{container_label_com_docker_compose_project="ionowu-web"}[15m]) >= 3
+        for: 5m
+        labels:
+          severity: critical
+          app: ionowu-web
+        annotations:
+          summary: "Kontainer ionowu-web restart berulang"
+          description: "Kontainer restart 3 kali atau lebih dalam 15 menit — kemungkinan crash loop."
+          runbook_url: https://github.com/endabean3/ionowu-v0.1/blob/main/docs/runbook.md#ionowuwebseringrestart
+
+      - alert: IonowuWebMendekatiBatasMemori
+        expr: |
+          container_memory_working_set_bytes{container_label_com_docker_compose_project="ionowu-web"}
+          / container_spec_memory_limit_bytes{container_label_com_docker_compose_project="ionowu-web"} > 0.9
+        for: 10m
+        labels:
+          severity: warning
+          app: ionowu-web
+        annotations:
+          summary: "Pemakaian memori ionowu-web di atas 90% batas"
+          description: "Kontainer mendekati batas RUN-05 dan berisiko dibunuh OOM."
+          runbook_url: https://github.com/endabean3/ionowu-v0.1/blob/main/docs/runbook.md#ionowuwebmendekatibatasmemori
+
+      - alert: IonowuWebSertifikatSegeraKedaluwarsa
+        expr: (probe_ssl_earliest_cert_expiry{job="blackbox", instance=~".*ionowu.com.*"} - time()) / 86400 < 14
+        for: 1h
+        labels:
+          severity: warning
+          app: ionowu-web
+        annotations:
+          summary: "Sertifikat TLS ionowu.com kurang dari 14 hari"
+          runbook_url: https://github.com/endabean3/ionowu-v0.1/blob/main/docs/runbook.md#ionowuwebsertifikatsegerakedaluwarsa

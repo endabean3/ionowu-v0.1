@@ -1,8 +1,9 @@
 import "server-only";
 
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { db } from "@/db/client";
 import { auditLogs, leads, outboxEvents } from "@/db/schema";
+import { currentTenantId } from "@/db/tenant";
 import type { Locale } from "@/lib/i18n";
 
 export type LeadIntakeInput = {
@@ -33,10 +34,13 @@ export type LeadIntakeResult = {
 export async function createLeadIntake(
   input: LeadIntakeInput,
 ): Promise<LeadIntakeResult> {
+  const tenantId = currentTenantId();
+
   return db.transaction(async (tx) => {
     const [insertedLead] = await tx
       .insert(leads)
       .values({
+        tenantId,
         requestId: input.requestId,
         name: input.name,
         email: input.email,
@@ -47,7 +51,10 @@ export async function createLeadIntake(
         locale: input.locale,
       })
       .onConflictDoNothing({
-        target: leads.requestId,
+        // Harus persis sama dengan unique index (tenant_id, request_id);
+        // kalau tidak, Postgres tidak menemukan arbiter dan insert ganda
+        // meledak jadi error, bukan diam-diam dilewati seperti yang dimaui.
+        target: [leads.tenantId, leads.requestId],
       })
       .returning({ id: leads.id });
 
@@ -57,7 +64,9 @@ export async function createLeadIntake(
       const [existingLead] = await tx
         .select({ id: leads.id })
         .from(leads)
-        .where(eq(leads.requestId, input.requestId))
+        .where(
+          and(eq(leads.tenantId, tenantId), eq(leads.requestId, input.requestId)),
+        )
         .limit(1);
 
       if (!existingLead) {
@@ -69,6 +78,7 @@ export async function createLeadIntake(
 
     if (insertedLead) {
       await tx.insert(auditLogs).values({
+        tenantId,
         action: "lead.created",
         entityType: "lead",
         entityId: leadId,
@@ -85,6 +95,7 @@ export async function createLeadIntake(
     const [insertedOutboxEvent] = await tx
       .insert(outboxEvents)
       .values({
+        tenantId,
         eventType: "lead.notification_email",
         idempotencyKey,
         payload: {
@@ -94,7 +105,7 @@ export async function createLeadIntake(
         },
       })
       .onConflictDoNothing({
-        target: outboxEvents.idempotencyKey,
+        target: [outboxEvents.tenantId, outboxEvents.idempotencyKey],
       })
       .returning({ id: outboxEvents.id });
 
@@ -103,7 +114,12 @@ export async function createLeadIntake(
       const [existingOutboxEvent] = await tx
         .select({ id: outboxEvents.id })
         .from(outboxEvents)
-        .where(eq(outboxEvents.idempotencyKey, idempotencyKey))
+        .where(
+          and(
+            eq(outboxEvents.tenantId, tenantId),
+            eq(outboxEvents.idempotencyKey, idempotencyKey),
+          ),
+        )
         .limit(1);
       outboxEventId = existingOutboxEvent?.id;
     }

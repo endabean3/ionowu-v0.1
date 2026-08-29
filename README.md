@@ -56,13 +56,16 @@ mengisi placeholder itu dengan asumsi pribadi sebelum dikonfirmasi.
 
 ## Environment
 
-Salin `.env.local.example` menjadi `.env.local`, lalu isi nilai sungguhan:
+Salin `.env.example` menjadi `.env.local`, lalu isi nilai sungguhan. Daftar
+lengkap variabel beserta penjelasannya ada di `.env.example`; ringkasannya:
 
 ```env
 RESEND_API_KEY=
 DATABASE_URL=
+DATABASE_MIGRATION_URL=
 DATABASE_POOL_MAX=5
 DATABASE_SSL=require
+TENANT_ID=
 AUTH_URL=http://localhost:3000
 AUTH_SECRET=
 AUTH_GOOGLE_ID=
@@ -72,7 +75,12 @@ CRON_SECRET=
 RATE_LIMIT_SECRET=
 CONTACT_TRUSTED_IP_HEADER=
 NEXT_PUBLIC_SITE_URL=http://localhost:3000
+OTEL_EXPORTER_OTLP_ENDPOINT=
+LOG_LEVEL=info
 ```
+
+Nilai sungguhan tidak pernah masuk Git. Di produksi seluruh rahasia dipasok
+lewat secret manager (CFG-03); `.env.example` hanya memuat nama variabel.
 
 Catatan formulir kontak:
 
@@ -120,15 +128,61 @@ Untuk production, isi `NEXT_PUBLIC_SITE_URL` dengan domain sungguhan, misalnya
 `https://ionowu.com`. Nilai ini dipakai Next.js untuk membuat URL absolut pada
 metadata Open Graph/Twitter.
 
-Catatan packaging production:
+## Produksi: Kontainer dan Standar Server
 
-- Build tetap membutuhkan dev dependency seperti TypeScript, ESLint, Tailwind,
-  dan Playwright di mesin build.
-- Runtime Node setelah build sebaiknya menjalankan dependency produksi saja:
-  `npm prune --omit=dev` atau instal ulang dengan `npm ci --omit=dev` setelah
-  artefak `.next` selesai dibuat.
-- Jangan unggah `.env.local`, `node_modules`, `.next/cache`, atau folder QA
-  seperti `test-results` ke paket deploy.
+Produksi berjalan sebagai kontainer, bukan sebagai folder Node yang disalin
+manual. Karena itu catatan `npm prune --omit=dev` yang lama sudah tidak
+berlaku: `output: "standalone"` di `next.config.ts` membuat `next build`
+menghasilkan `.next/standalone` berisi server plus hanya modul yang benar-benar
+dipakai, dan stage runtime tidak memuat npm sama sekali.
+
+Berkas yang mengatur ini:
+
+```text
+Dockerfile                              multi-stage; base image dikunci ke digest
+compose.yaml                            jaringan, batas sumber daya, job migrasi
+docker/healthcheck.mjs                  probe untuk image distroless (tanpa shell)
+.dockerignore                           pemangkas konteks build
+.github/workflows/ci.yml                build, Trivy, cosign
+observability/alerts/                   aturan alert Prometheus
+observability/dashboards/               dashboard Grafana
+docs/deploy.md                          urutan deploy, rollback, uji pemulihan
+docs/runbook.md                         penanganan tiap alert
+docs/kepatuhan-server.md                status 32 langkah wajib produksi
+```
+
+Ringkasnya:
+
+- Aplikasi bernama `ionowu-web`; nama itu jadi prefiks seluruh sumber daya —
+  jaringan `ionowu-web-internal`, database `ionowu_web`, prefiks Redis
+  `ionowu-web:`, dan `service.name` di OpenTelemetry.
+- Kontainer berjalan sebagai UID 65532 dengan root filesystem read-only.
+- Hanya kontainer `web` yang menyentuh `dokploy-network`; database dan Redis
+  terkurung di jaringan internal.
+- Migrasi database jalan sebagai job terpisah dengan role owner; runtime
+  memakai role `ionowu_runtime` yang haknya minimum.
+- `/health/live` tidak menyentuh dependensi apa pun (supaya database mati tidak
+  memicu restart aplikasi yang sehat); `/health/ready` memeriksa database dan
+  kelengkapan konfigurasi, dan menahan trafik saat belum siap.
+- Setiap baris log sisi server berbentuk JSON dan memuat `trace_id`.
+
+**Status kepatuhan belum penuh.** Yang masih tertahan — antara lain penyedia
+OIDC terpusat, alokasi port, uji pemulihan backup, dan uji rollback — terdaftar
+lengkap beserta alasannya di `docs/kepatuhan-server.md`.
+
+Perintah tambahan:
+
+```bash
+npm run img:digests
+```
+
+Memeriksa apakah digest base image yang terkunci masih yang terbaru.
+
+```bash
+npm run docker:build
+```
+
+Membangun image runtime secara lokal.
 
 ## Command
 
@@ -183,6 +237,7 @@ Minimal sebelum dianggap siap luncur:
 - reduced motion tetap menampilkan halaman utuh
 - Lighthouse memenuhi target performa di dokumen pedoman
 - metadata/domain produksi sudah diisi
+- seluruh butir wajib di `docs/kepatuhan-server.md` sudah berstatus selesai
 
 Saat ini project berada di tahap **Poles dan Luncurkan**. Frontend inti sudah
 ada, tetapi launch penuh masih menunggu data bisnis resmi dan aktivasi Resend.
