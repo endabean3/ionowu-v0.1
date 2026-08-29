@@ -26,8 +26,8 @@ Arti kolom status:
 | 6 | Base image dikunci digest (IMG-02) | Selesai | Node dan distroless di `Dockerfile`; Postgres dan Redis di `compose.yaml`. |
 | 7 | Digest tercatat (IMG-03) | Selesai | Terkumpul di `ARG` paling atas `Dockerfile`. `npm run img:digests` memeriksa apakah masih sinkron dan gagal kalau sudah usang. |
 | 8 | `.dockerignore` (IMG-06) | Selesai | Termasuk larangan `.env*` supaya rahasia tidak pernah masuk konteks build. |
-| 9 | Ukuran image di bawah ambang (IMG-05) | Siap, tunggu server | Gerbang ada di CI (`IMAGE_SIZE_LIMIT_MB`, sementara 400 MB). **Angka ambang sungguhan belum saya punya** — sesuaikan dengan §4. Ukuran nyata belum pernah diukur karena mesin ini tidak menjalankan Docker daemon. |
-| 10 | Kontainer berjalan sebagai UID 65532 (RUN-01) | Siap, tunggu server | `USER 65532:65532` di stage `runner` dan `migrator`, ditegaskan lagi lewat `user:` di Compose, dan diperiksa CI dari `docker inspect`. Belum bisa dijalankan lokal (tidak ada Docker daemon). |
+| 9 | Ukuran image di bawah ambang (IMG-05) | Selesai | Terukur di CI: **170 MB**. Gerbangnya menggagalkan build kalau terlampaui. **Angka ambang sungguhan belum saya punya** — sementara dipatok 400 MB (`IMAGE_SIZE_LIMIT_MB`); sesuaikan dengan §4. |
+| 10 | Kontainer berjalan sebagai UID 65532 (RUN-01) | Selesai | Terverifikasi di CI: `docker inspect` mengembalikan `Config.User = 65532:65532`. Dipasang di stage `runner` dan `migrator`, ditegaskan lagi lewat `user:` di Compose. |
 
 ## Tahap 3 — Isolasi
 
@@ -57,7 +57,7 @@ Arti kolom status:
 | 22 | Otorisasi di lapisan aplikasi (SEC-03) | Selesai | RBAC di `src/lib/admin/policy.ts`; `requireAdmin(permission)` dipakai rute admin. |
 | 23 | Rahasia lewat secret manager; `.env.example` (CFG-03, CFG-04) | Siap, tunggu server | `.env.example` dibuat dan tidak lagi diabaikan Git; nilai sungguhan tetap dilarang masuk repo. Penyambungan ke secret manager dilakukan di Dokploy. |
 | 24 | Rate limiting aktif (SEC-05) | Selesai | Sudah ada sebelumnya: atomik di Postgres, bucket global + hash email HMAC, IP hanya dari header proxy yang dipercaya eksplisit. |
-| 25 | Trivy tanpa temuan HIGH/CRITICAL (SEC-01) | Siap, tunggu server | Gerbang ada di CI dan menggagalkan build. Sebagai langkah awal, dua kerentanan HIGH di dependensi (`js-yaml`, `nanoid`) sudah ditutup — `npm audit` kini bersih. Trivy sendiri belum pernah dijalankan atas image ini. |
+| 25 | Trivy tanpa temuan HIGH/CRITICAL (SEC-01) | Selesai | Dua kerentanan HIGH di dependensi npm (`js-yaml`, `nanoid`) ditutup; `npm audit` bersih. Trivy sudah benar-benar dijalankan di CI dan sempat menolak build: base image distroless varian **bookworm** membawa `libssl3` 3.0.18 dengan satu CVE CRITICAL dan lima HIGH. Diperbaiki dengan pindah ke varian **trixie** (OpenSSL 3.5), bukan dengan mendaftarkan pengecualian. |
 
 ## Tahap 6 — Observabilitas
 
@@ -73,7 +73,7 @@ Arti kolom status:
 
 | # | Butir | Status | Catatan |
 | --- | --- | --- | --- |
-| 31 | CI membangun, memindai, menandatangani (IMG-12) | Siap, tunggu server | `.github/workflows/ci.yml`: check → audit → build → verifikasi UID & ukuran → Trivy → push → cosign keyless. Belum pernah dijalankan; workflow perlu run pertama untuk dibuktikan. |
+| 31 | CI membangun, memindai, menandatangani (IMG-12) | Siap, tunggu server | `.github/workflows/ci.yml`: check → audit → build → verifikasi UID & ukuran → Trivy → push → cosign keyless. Langkah sampai Trivy sudah terbukti jalan. Push ke GHCR dan penandatanganan cosign belum pernah berhasil sekali pun — keduanya baru teruji setelah paket `ionowu-web` bisa dibuat di bawah owner repo. |
 | 32 | Deploy staging berhasil (DEP-06) | Di luar repo | |
 | 33 | Rollback diuji (DEP-04) | Di luar repo | Prosedur dan tabel catatan di `docs/deploy.md`, termasuk aturan migrasi kompatibel-mundur yang membuat rollback aman. |
 | 34 | Deployment tanpa downtime (DEP-07) | Siap, tunggu server | Dua replika, `order: start-first`, readiness gate, dan `failure_action: rollback`. Cara membuktikannya ada di `docs/deploy.md`. |

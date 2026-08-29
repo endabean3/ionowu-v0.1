@@ -12,11 +12,17 @@
 #   RUN-01  runtime dan migrator berjalan sebagai UID 65532 (nonroot)
 #   DAT-05  migrasi punya stage & service sendiri, bukan menumpang runtime
 #
-# Rotasi digest: jalankan `npm run img:digests` lalu perbarui tiga ARG ini.
+# Base image memakai Debian 13 (trixie), BUKAN Debian 12 (bookworm). Varian
+# bookworm distroless masih membawa libssl3 3.0.18 yang kena satu CVE CRITICAL
+# dan lima HIGH (CVE-2026-31789 dkk.) -- Trivy menolaknya, dan perbaikannya
+# memang belum terbit di image itu. Trixie memakai OpenSSL 3.5 yang tidak
+# terdampak. Stage build ikut trixie supaya distro build dan runtime sama.
+#
+# Rotasi digest: jalankan `npm run img:digests` lalu perbarui dua ARG ini.
 # ---------------------------------------------------------------------------
 
-ARG NODE_IMAGE=node:24-bookworm-slim@sha256:ba849c60be29959425b8734d57b8b4b7d56f98edd9504c9af091d5281095a71e
-ARG RUNTIME_IMAGE=gcr.io/distroless/nodejs24-debian12:nonroot@sha256:14d42e2511532589a7c7e01a753667a74fcc96266e137e8125006b87b0c32d0a
+ARG NODE_IMAGE=node:24-trixie-slim@sha256:50c3b2f6988dfc307b86e5301d69611af31f4789bdf232863b07d3b02fe55ae0
+ARG RUNTIME_IMAGE=gcr.io/distroless/nodejs24-debian13:nonroot@sha256:774b7d020b24214835769e24c3544835526cd0288f0b094eae48e8b2c2429a79
 
 # --- Stage 1: dependencies -------------------------------------------------
 FROM ${NODE_IMAGE} AS deps

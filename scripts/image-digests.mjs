@@ -12,8 +12,8 @@
 import { readFileSync } from "node:fs";
 
 const IMAGES = [
-  { registry: "registry-1.docker.io", auth: "docker", repo: "library/node", tag: "24-bookworm-slim" },
-  { registry: "gcr.io", auth: "gcr", repo: "distroless/nodejs24-debian12", tag: "nonroot" },
+  { registry: "registry-1.docker.io", auth: "docker", repo: "library/node", tag: "24-trixie-slim" },
+  { registry: "gcr.io", auth: "gcr", repo: "distroless/nodejs24-debian13", tag: "nonroot" },
   { registry: "registry-1.docker.io", auth: "docker", repo: "library/postgres", tag: "17-alpine" },
   { registry: "registry-1.docker.io", auth: "docker", repo: "library/redis", tag: "7-alpine" },
 ];
