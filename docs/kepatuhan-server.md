@@ -26,7 +26,7 @@ Arti kolom status:
 | 6 | Base image dikunci digest (IMG-02) | Selesai | Node dan distroless di `Dockerfile`; Postgres dan Redis di `compose.yaml`. |
 | 7 | Digest tercatat (IMG-03) | Selesai | Terkumpul di `ARG` paling atas `Dockerfile`. `npm run img:digests` memeriksa apakah masih sinkron dan gagal kalau sudah usang. |
 | 8 | `.dockerignore` (IMG-06) | Selesai | Termasuk larangan `.env*` supaya rahasia tidak pernah masuk konteks build. |
-| 9 | Ukuran image di bawah ambang (IMG-05) | Selesai | Terukur di CI: **170 MB**. Gerbangnya menggagalkan build kalau terlampaui. **Angka ambang sungguhan belum saya punya** — sementara dipatok 400 MB (`IMAGE_SIZE_LIMIT_MB`); sesuaikan dengan §4. |
+| 9 | Ukuran image di bawah ambang (IMG-05) | Selesai | Terukur di CI: **178 MB** (varian trixie; varian bookworm sebelumnya 170 MB). Gerbangnya menggagalkan build kalau terlampaui. **Angka ambang sungguhan belum saya punya** — sementara dipatok 400 MB (`IMAGE_SIZE_LIMIT_MB`); sesuaikan dengan §4. |
 | 10 | Kontainer berjalan sebagai UID 65532 (RUN-01) | Selesai | Terverifikasi di CI: `docker inspect` mengembalikan `Config.User = 65532:65532`. Dipasang di stage `runner` dan `migrator`, ditegaskan lagi lewat `user:` di Compose. |
 
 ## Tahap 3 — Isolasi
@@ -73,7 +73,7 @@ Arti kolom status:
 
 | # | Butir | Status | Catatan |
 | --- | --- | --- | --- |
-| 31 | CI membangun, memindai, menandatangani (IMG-12) | Siap, tunggu server | `.github/workflows/ci.yml`: check → audit → build → verifikasi UID & ukuran → Trivy → push → cosign keyless. Langkah sampai Trivy sudah terbukti jalan. Push ke GHCR dan penandatanganan cosign belum pernah berhasil sekali pun — keduanya baru teruji setelah paket `ionowu-web` bisa dibuat di bawah owner repo. |
+| 31 | CI membangun, memindai, menandatangani (IMG-12) | Selesai | `.github/workflows/ci.yml` hijau penuh: check → audit → build → verifikasi UID & ukuran → Trivy → push ke GHCR → cosign keyless. Kedua image (`ionowu-web` dan `ionowu-web-migrate`) sudah terdorong dan ditandatangani. |
 | 32 | Deploy staging berhasil (DEP-06) | Di luar repo | |
 | 33 | Rollback diuji (DEP-04) | Di luar repo | Prosedur dan tabel catatan di `docs/deploy.md`, termasuk aturan migrasi kompatibel-mundur yang membuat rollback aman. |
 | 34 | Deployment tanpa downtime (DEP-07) | Siap, tunggu server | Dua replika, `order: start-first`, readiness gate, dan `failure_action: rollback`. Cara membuktikannya ada di `docs/deploy.md`. |
