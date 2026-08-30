@@ -143,7 +143,7 @@ Prosedur lengkap beserta uji pemulihan wajib ada di
 
 ## Stack pemantauan
 
-Prometheus dan blackbox_exporter berjalan di host sebagai stack
+Prometheus, blackbox_exporter, dan cAdvisor berjalan di host sebagai stack
 `ionowu-monitoring`, terpisah dari aplikasi. Berkasnya ada di
 `/opt/ionowu-monitoring/` di server, sumbernya di `observability/` di repo ini.
 
@@ -163,6 +163,11 @@ kehilangan riwayat metrik:
 ```bash
 ssh root@76.13.16.85 'curl -s -X POST http://127.0.0.1:9090/-/reload'
 ```
+
+Berkas konfigurasi di-mount sebagai **direktori**, bukan berkas satuan, supaya
+isi baru benar-benar terbaca setelah berkasnya diganti. Kalau suatu saat mount
+itu diubah kembali jadi berkas satuan, `/-/reload` akan membalas 200 tanpa
+mengubah apa pun — kontainer tetap terikat ke inode yang lama.
 
 Periksa dulu sebelum memuat ulang — konfigurasi yang salah membuat Prometheus
 menolak reload dan tetap memakai konfigurasi lama:

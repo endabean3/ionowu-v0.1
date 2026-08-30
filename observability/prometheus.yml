@@ -12,7 +12,7 @@ global:
     host: srv1882569
 
 rule_files:
-  - /etc/prometheus/alerts/*.yaml
+  - /etc/prometheus/conf/alerts/*.yaml
 
 scrape_configs:
   # Prometheus memantau dirinya sendiri — kalau ini hilang dari grafik, berarti
@@ -20,6 +20,12 @@ scrape_configs:
   - job_name: prometheus
     static_configs:
       - targets: ["127.0.0.1:9090"]
+
+  # Metrik per kontainer dari host. Dipakai dua aturan alert yang menyaring
+  # dengan `name=~"ionowu-web-.*"`.
+  - job_name: cadvisor
+    static_configs:
+      - targets: ["ionowu-cadvisor:8080"]
 
   # Nama job HARUS `blackbox`: aturan di alerts/ionowu-web.rules.yaml menyaring
   # dengan `job="blackbox"`.
