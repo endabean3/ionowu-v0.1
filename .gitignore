@@ -44,3 +44,6 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Rahasia dan berkas hasil render di server — tidak pernah masuk Git.
+observability/secrets/

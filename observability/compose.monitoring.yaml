@@ -12,8 +12,11 @@
 #
 # Akses UI: TIDAK diekspos ke internet. Port hanya diikat ke 127.0.0.1, jadi
 # dijangkau lewat SSH tunnel:
-#   ssh -N -L 9090:127.0.0.1:9090 root@76.13.16.85
-# lalu buka http://localhost:9090
+#   ssh -N -L 9090:127.0.0.1:9090 -L 9093:127.0.0.1:9093 root@76.13.16.85
+# lalu buka http://localhost:9090 (Prometheus) atau :9093 (Alertmanager)
+#
+# RAHASIA: bot token Telegram TIDAK ada di repo. Ia dibaca dari berkas
+# ./secrets/telegram-bot-token di server, yang dibuat pemiliknya sendiri.
 # ---------------------------------------------------------------------------
 
 name: ionowu-monitoring
@@ -106,6 +109,49 @@ services:
         reservations:
           memory: 32M
 
+  # --- Alertmanager: yang benar-benar mengirim kabar ------------------------
+  # Prometheus hanya MENENTUKAN kapan alert menyala; tanpa layanan ini, alert
+  # berhenti sebagai warna di UI dan tidak ada manusia yang diberi tahu.
+  alertmanager:
+    <<: *defaults
+    image: prom/alertmanager:v0.34.0@sha256:690c7b525f4367aa91f73e2f91c632206d32e97c6384bdbf2fb7a861b420340d
+    container_name: ionowu-alertmanager
+    user: "65534:65534"
+    command:
+      # Membaca berkas HASIL RENDER di secrets/, bukan templat di repo.
+      # Templatnya tidak memuat chat id, dan direktori secrets/ tidak pernah
+      # ikut tersalin saat konfigurasi disinkronkan ulang dari repo — jadi
+      # chat id dan token tidak bisa tertimpa diam-diam oleh deploy berikutnya.
+      - --config.file=/etc/alertmanager/conf/secrets/alertmanager.yml
+      - --storage.path=/alertmanager
+      - --web.listen-address=0.0.0.0:9093
+    volumes:
+      # Direktori, bukan berkas satuan — alasannya sama seperti di Prometheus.
+      - ./:/etc/alertmanager/conf:ro
+      # Menyimpan silence dan catatan notifikasi. Kalau volume ini hilang,
+      # alert yang sudah dibisukan akan berteriak lagi setelah restart.
+      - alertmanager-data:/alertmanager
+    tmpfs:
+      - /tmp:size=32m,mode=1777
+    ports:
+      - "127.0.0.1:9093:9093"
+    networks:
+      - monitoring
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://127.0.0.1:9093/-/healthy"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+    stop_grace_period: 15s
+    deploy:
+      resources:
+        limits:
+          cpus: "0.25"
+          memory: 128M
+        reservations:
+          memory: 32M
+
   # --- cAdvisor: metrik per kontainer ---------------------------------------
   # Menghidupkan dua aturan yang tanpa ini tidak punya data sama sekali:
   # IonowuWebSeringRestart dan IonowuWebMendekatiBatasMemori.
@@ -161,6 +207,11 @@ networks:
     name: ionowu-monitoring
 
 volumes:
+  alertmanager-data:
+    name: ionowu-monitoring-alertmanager
+    labels:
+      ionowu.backup: "false"
+      ionowu.app: ionowu-monitoring
   prometheus-data:
     name: ionowu-monitoring-promdata
     labels:

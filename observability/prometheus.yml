@@ -11,6 +11,13 @@ global:
   external_labels:
     host: srv1882569
 
+# Ke mana alert yang menyala dikirim. Tanpa blok ini Prometheus tetap
+# mengevaluasi aturan, tetapi hasilnya berhenti di UI-nya sendiri.
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets: ["ionowu-alertmanager:9093"]
+
 rule_files:
   - /etc/prometheus/conf/alerts/*.yaml
 
@@ -23,6 +30,10 @@ scrape_configs:
 
   # Metrik per kontainer dari host. Dipakai dua aturan alert yang menyaring
   # dengan `name=~"ionowu-web-.*"`.
+  - job_name: alertmanager
+    static_configs:
+      - targets: ["ionowu-alertmanager:9093"]
+
   - job_name: cadvisor
     static_configs:
       - targets: ["ionowu-cadvisor:8080"]
