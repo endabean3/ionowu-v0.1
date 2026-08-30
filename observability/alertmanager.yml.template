@@ -1,0 +1,63 @@
+# TEMPLAT Alertmanager — pengirim notifikasi alert Ionowu ke Telegram.
+#
+# Ini SUMBER, bukan berkas yang dibaca Alertmanager. `setup-telegram.sh` di
+# server merender berkas ini jadi secrets/alertmanager.yml dengan chat id yang
+# sebenarnya. Menyimpan chat id di luar repo membuatnya tidak ikut tertimpa
+# setiap kali konfigurasi disinkronkan ulang dari Git.
+#
+# CATATAN RAHASIA: bot token TIDAK pernah ditulis di berkas ini. Ia dibaca dari
+# /etc/alertmanager/conf/secrets/telegram-bot-token, yang dibuat langsung di
+# server oleh pemiliknya dan tidak pernah masuk Git. Berkas ini aman di-commit.
+
+global:
+  resolve_timeout: 5m
+
+route:
+  # Dikelompokkan per nama alert supaya lima aturan tidak saling menimpa.
+  group_by: ["alertname"]
+  # Tunggu sebentar sebelum mengirim, supaya beberapa alert yang menyala
+  # berbarengan (mis. situs mati -> probe gagal DAN lambat) datang sebagai
+  # satu pesan, bukan tiga.
+  group_wait: 30s
+  group_interval: 5m
+  # Diulang tiap 4 jam selama masih menyala. Cukup sering untuk tidak
+  # terlupakan, cukup jarang untuk tidak dibisukan orang.
+  repeat_interval: 4h
+  receiver: telegram
+
+  routes:
+    # Yang kritis diberitahukan lebih cepat dan diulang lebih rapat.
+    - matchers:
+        - severity = "critical"
+      receiver: telegram
+      group_wait: 10s
+      repeat_interval: 1h
+
+inhibit_rules:
+  # Kalau situs benar-benar tidak siap, tidak perlu ikut mengabari bahwa ia
+  # lambat — lambat itu gejala turunan dari masalah yang sama.
+  - source_matchers:
+      - alertname = "IonowuWebTidakSiap"
+    target_matchers:
+      - alertname = "IonowuWebLambat"
+    equal: ["instance"]
+
+receivers:
+  - name: telegram
+    telegram_configs:
+      - bot_token_file: /etc/alertmanager/conf/secrets/telegram-bot-token
+        chat_id: GANTI_CHAT_ID
+        parse_mode: HTML
+        # Kabar pulih ikut dikirim. Tanpa ini, orang tidak pernah tahu kapan
+        # masalahnya selesai dan cenderung mengabaikan alert berikutnya.
+        send_resolved: true
+        message: |-
+          {{ if eq .Status "firing" }}🔴 <b>MENYALA</b>{{ else }}🟢 <b>PULIH</b>{{ end }} — {{ .CommonLabels.alertname }}
+          {{ range .Alerts }}
+          <b>{{ .Annotations.summary }}</b>
+          {{ if .Annotations.description }}{{ .Annotations.description }}{{ end }}
+          Tingkat: {{ .Labels.severity }}{{ if .Labels.instance }}
+          Target: {{ .Labels.instance }}{{ end }}
+          Mulai: {{ .StartsAt.Format "02 Jan 15:04 MST" }}
+          {{ if .Annotations.runbook_url }}Runbook: {{ .Annotations.runbook_url }}{{ end }}
+          {{ end }}

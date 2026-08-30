@@ -76,7 +76,7 @@ Arti kolom status:
 | 28 | OpenTelemetry terpasang (OBS-01) | **Belum** | Kodenya siap (`src/instrumentation.ts`, eksporter OTLP standar), tetapi di produksi `OTEL_EXPORTER_OTLP_ENDPOINT` **kosong** dan tidak ada satu pun kontainer kolektor di host. Artinya tidak ada trace yang benar-benar keluar dari aplikasi. Butuh kolektor OTLP dan pengisian variabel itu di Dokploy. |
 | 29 | `trace_id` di setiap log (OBS-02) | Selesai | `src/lib/observability/log.ts`; seluruh `console.error` sisi server sudah diganti. Diverifikasi lokal: permintaan ke `/health/ready` menghasilkan baris log JSON berisi `trace_id` dan `span_id`. |
 | 30 | `/health/live` dan `/health/ready` (RUN-08) | Terverifikasi di produksi | `https://ionowu.com/health/live` membalas 200 tanpa menyentuh dependensi. `/health/ready` membalas 200 `ready` dengan ketiga pemeriksaan lulus (`database`, `contact_pipeline`, `admin_auth`), header `cache-control: no-store`. Healthcheck kontainer juga `exit=0`. `live` sengaja tidak memeriksa database supaya database yang mati tidak memicu restart aplikasi yang sebenarnya sehat. |
-| 31 | Dashboard dan minimal satu alert (OBS-05) | **Sebagian** | Stack `ionowu-monitoring` berjalan di host (`observability/compose.monitoring.yaml`): Prometheus v3.14.0, blackbox_exporter v0.28.0, cAdvisor v0.55.1 — ketiganya `healthy`, ketiga target `up`. **Kelima aturan alert kini punya data nyata**: probe `probe_success=1`, pemakaian memori 8–9% dari batas, umur kontainer terbaca. **Yang masih kurang:** (a) belum ada Alertmanager, jadi alert menyala hanya di UI Prometheus dan tidak ada yang dikirimi — perlu tujuan notifikasi dari Anda; (b) dashboard Grafana masih berupa berkas JSON, belum ada Grafana yang memuatnya. |
+| 31 | Dashboard dan minimal satu alert (OBS-05) | **Sebagian** | Stack `ionowu-monitoring` berjalan di host: Prometheus v3.14.0, blackbox_exporter v0.28.0, cAdvisor v0.55.1 — ketiganya `healthy`, ketiga target `up`, kelima aturan alert punya data nyata. Alertmanager v0.34.0 sudah dikonfigurasi lengkap dengan tujuan Telegram (`observability/alertmanager.yml.template`), diuji-kering dengan `amtool check-config`, **tetapi belum menyala**: ia menunggu bot token yang harus dipasang pemiliknya sendiri lewat `./setup-telegram.sh` di server. Sampai langkah itu dijalankan, alert masih berhenti di UI Prometheus. **Sisanya:** dashboard Grafana masih berupa JSON, belum ada Grafana yang memuatnya. |
 | 32 | Runbook tertaut dari alert (OBS-08) | Selesai | `docs/runbook.md`; judul bagiannya sama persis dengan nama alert, dan setiap alert memuat `runbook_url`. |
 
 ## Tahap 7 — Deployment
@@ -101,12 +101,13 @@ Tiga butir di atas berstatus **Belum**, plus satu catatan operasional:
 1. **OBS-01 — OTel tidak mengirim ke mana pun.** `OTEL_EXPORTER_OTLP_ENDPOINT`
    kosong dan tidak ada kolektor di host. `trace_id` tetap terbentuk di log,
    tapi tidak ada trace yang tersimpan atau bisa ditelusuri.
-2. **OBS-05 — pemantauan sudah ada, pemberitahuannya belum.** Prometheus dan
-   blackbox_exporter kini berjalan dan benar-benar mengukur situs, tetapi
-   tanpa Alertmanager alert hanya berubah warna di UI Prometheus yang tidak
-   ditonton siapa pun. Jadi kalimat "tidak ada yang memberi tahu kalau situs
-   mati" masih berlaku sampai Alertmanager dipasang dan tujuan notifikasinya
-   ditentukan. Kelima aturannya sendiri sudah punya data dan siap menyala.
+2. **OBS-05 — tinggal satu langkah yang harus Anda jalankan sendiri.**
+   Prometheus, blackbox_exporter, dan cAdvisor sudah mengukur situs, dan
+   kelima aturan punya data. Alertmanager sudah terkonfigurasi ke Telegram
+   tetapi belum menyala karena bot token adalah kredensial yang harus dipasang
+   pemiliknya: jalankan `./setup-telegram.sh` di `/opt/ionowu-monitoring`.
+   Sampai itu dilakukan, kalimat "tidak ada yang memberi tahu kalau situs
+   mati" masih berlaku.
 3. **SEC-02 — belum OIDC terpusat.** Masih Google OAuth langsung.
 4. **`APP_VERSION=main` di produksi.** Image-nya sendiri sudah dideploy per
    digest, tetapi variabel versi ikut `IMAGE_TAG`, sehingga setiap log dan
@@ -124,8 +125,9 @@ Tiga butir di atas berstatus **Belum**, plus satu catatan operasional:
    standar, tetapi tidak ada di repo maupun di server. Kalau itu gerbang
    resmi, sebaiknya ikut masuk repo dan dipanggil dari CI supaya pelanggaran
    ketahuan sebelum deploy, bukan sesudahnya.
-3. **Tujuan notifikasi alert** (email, Telegram, Slack, atau lainnya) supaya
-   Alertmanager bisa dipasang dan alert benar-benar sampai ke orang.
+3. **Menjalankan `./setup-telegram.sh` di server** dengan bot token dan chat
+   ID dari Telegram. Token tidak boleh lewat saya — skripnya membacanya dari
+   prompt tersembunyi dan menguji kirim sebelum menulis apa pun.
 4. **Alokasi port dari `registry-port.md`**, atau konfirmasi bahwa aplikasi
    ini memang tidak butuh port host karena seluruh trafiknya lewat Traefik.
 5. **Detail penyedia OIDC terpusat** (issuer, client, pemetaan klaim ke role).

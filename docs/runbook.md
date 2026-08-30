@@ -143,16 +143,18 @@ Prosedur lengkap beserta uji pemulihan wajib ada di
 
 ## Stack pemantauan
 
-Prometheus, blackbox_exporter, dan cAdvisor berjalan di host sebagai stack
-`ionowu-monitoring`, terpisah dari aplikasi. Berkasnya ada di
+Prometheus, blackbox_exporter, cAdvisor, dan Alertmanager berjalan di host
+sebagai stack `ionowu-monitoring`, terpisah dari aplikasi. Berkasnya ada di
 `/opt/ionowu-monitoring/` di server, sumbernya di `observability/` di repo ini.
 
 UI Prometheus **tidak** diekspos ke internet — port hanya diikat ke loopback.
 Menjangkaunya lewat SSH tunnel:
 
 ```bash
-ssh -N -L 9090:127.0.0.1:9090 root@76.13.16.85
+ssh -N -L 9090:127.0.0.1:9090 -L 9093:127.0.0.1:9093 root@76.13.16.85
 ```
+
+`http://localhost:9090` Prometheus, `http://localhost:9093` Alertmanager.
 
 Lalu buka `http://localhost:9090` — halaman **Alerts** memperlihatkan status
 kelima aturan, **Targets** memperlihatkan apakah probe masih hidup.
@@ -176,6 +178,35 @@ menolak reload dan tetap memakai konfigurasi lama:
 ssh root@76.13.16.85 'cd /opt/ionowu-monitoring && docker compose exec prometheus promtool check config /etc/prometheus/prometheus.yml'
 ```
 
-> **Belum ada Alertmanager.** Alert berubah status di UI Prometheus, tetapi
-> tidak dikirim ke mana pun. Sampai itu dipasang, halaman Alerts harus dilihat
-> sendiri — jangan menganggap "tidak ada kabar" berarti "tidak ada masalah".
+### Notifikasi Telegram
+
+Alert dikirim ke Telegram lewat Alertmanager. Bot token TIDAK ada di repo — ia
+dibaca dari `/opt/ionowu-monitoring/secrets/telegram-bot-token`, yang dibuat
+langsung di server.
+
+Menyambungkan pertama kali, atau mengganti bot:
+
+```bash
+ssh root@76.13.16.85 'cd /opt/ionowu-monitoring && ./setup-telegram.sh'
+```
+
+Skrip itu menanyakan token lewat prompt tersembunyi (tidak masuk riwayat shell),
+menguji kirim ke Telegram lebih dulu, dan baru menulis berkas kalau pesan uji
+benar-benar sampai.
+
+Memastikan jalurnya masih hidup:
+
+```bash
+ssh root@76.13.16.85 'curl -s http://127.0.0.1:9090/api/v1/alertmanagers'
+```
+
+Kalau `activeAlertmanagers` kosong, Prometheus sedang tidak punya tempat
+mengirim alert — perlakukan itu sebagai gangguan, bukan detail kecil.
+
+Membisukan alert sementara saat pemeliharaan terencana (dari UI Alertmanager di
+`http://localhost:9093` lewat tunnel, menu **Silences**). Silence tersimpan di
+volume, jadi tetap berlaku setelah restart.
+
+> **Diam bukan berarti aman.** Kalau Alertmanager sendiri mati, tidak akan ada
+> yang mengabari bahwa ia mati. Sekali-sekali buka halaman Alerts, dan pastikan
+> alert uji masih bisa sampai setelah ada perubahan di stack pemantauan.
