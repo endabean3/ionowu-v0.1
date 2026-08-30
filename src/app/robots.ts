@@ -11,7 +11,10 @@ export default function robots(): MetadataRoute.Robots {
     rules: {
       userAgent: "*",
       allow: "/",
-      disallow: ["/admin", "/admin/", "/api/", "/dev/"],
+      // `/health/` ikut ditutup: endpoint probe tidak punya nilai bagi
+      // pembaca, dan hasil pencarian yang memuat JSON status hanya membuang
+      // anggaran perayapan.
+      disallow: ["/admin", "/admin/", "/api/", "/dev/", "/health/"],
     },
     sitemap: `${siteUrl}/sitemap.xml`,
   };

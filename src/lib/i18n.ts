@@ -15,6 +15,16 @@ export const LOCALE_HTML_LANG: Record<Locale, string> = {
   zh: "zh-CN",
 };
 
+/** Kode hreflang resmi situs. SATU sumber untuk tag <link> di halaman DAN
+ *  untuk sitemap — kalau keduanya menyebut kode berbeda untuk bahasa yang
+ *  sama (mis. `zh` di sitemap tetapi `zh-CN` di halaman), Google menganggap
+ *  anotasinya bertentangan dan bisa mengabaikan dua-duanya. */
+export const LOCALE_HREFLANG: Record<Locale, string> = {
+  id: "id",
+  en: "en",
+  zh: "zh-CN",
+};
+
 export const LOCALE_OG: Record<Locale, string> = {
   id: "id_ID",
   en: "en_US",
@@ -42,13 +52,19 @@ export function withLocale(path: string, locale: Locale): string {
   return clean === "/" ? `/${locale}` : `/${locale}${clean}`;
 }
 
+/** Peta hreflang -> URL untuk sebuah path, dipakai bersama oleh metadata
+ *  halaman dan sitemap. */
+export function hreflangLanguages(path: string): Record<string, string> {
+  return Object.fromEntries(
+    LOCALES.map((locale) => [LOCALE_HREFLANG[locale], withLocale(path, locale)]),
+  );
+}
+
 export function localizedAlternates(path: string) {
   return {
     canonical: withLocale(path, DEFAULT_LOCALE),
     languages: {
-      id: withLocale(path, "id"),
-      en: withLocale(path, "en"),
-      "zh-CN": withLocale(path, "zh"),
+      ...hreflangLanguages(path),
       // Dibaca mesin pencari untuk pengunjung yang bahasanya tidak cocok
       // satu pun di atas — tanpa ini, Google tidak tahu versi mana yang
       // jadi cadangan. Samakan dengan bahasa bawaan situs (DEFAULT_LOCALE).

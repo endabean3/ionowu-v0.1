@@ -5,6 +5,8 @@ import { Footer } from "@/components/sections/Footer";
 import { PageTransition } from "@/components/motion/PageTransition";
 import { LocaleHtmlSync } from "@/components/LocaleHtmlSync";
 import { localizedAlternates } from "@/lib/i18n";
+import { JsonLd } from "@/components/seo/JsonLd";
+import { organizationSchema, websiteSchema } from "@/lib/seo/structured-data";
 import "./globals.css";
 
 /* Huruf — dokumen 04.
@@ -108,6 +110,29 @@ export const metadata: Metadata = {
     description:
       "Kami bangun perangkat lunak yang menopang bisnis Anda.",
   },
+  // Tanpa blok ini, tautan yang dibagikan di X/Twitter muncul sebagai teks
+  // polos. Gambarnya diambil dari app/opengraph-image.tsx — Next.js memakai
+  // gambar Open Graph sebagai cadangan Twitter secara otomatis, jadi tidak
+  // perlu berkas kedua yang isinya sama.
+  twitter: {
+    card: "summary_large_image",
+    title: "Ionowu - Software House",
+    description:
+      "Kami bangun perangkat lunak yang menopang bisnis Anda.",
+  },
+  // Petunjuk eksplisit untuk perayap. Nilai `max-image-preview: large`
+  // membuat pratinjau gambar di hasil pencarian tampil besar, bukan thumbnail.
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+      "max-video-preview": -1,
+    },
+  },
 };
 
 export const viewport: Viewport = {
@@ -154,6 +179,10 @@ export default function RootLayout({
           id="ionowu-theme-init"
           dangerouslySetInnerHTML={{ __html: themeInitScript }}
         />
+        {/* Identitas perusahaan dan situs, dipasang sekali di layout supaya
+            setiap halaman mewarisinya. Dua skema ini yang dipakai Google untuk
+            menautkan seluruh halaman ke satu entitas yang sama. */}
+        <JsonLd data={[organizationSchema("id"), websiteSchema("id")]} />
       </head>
       <body className="flex min-h-full flex-col bg-base text-ink">
         <LocaleHtmlSync />

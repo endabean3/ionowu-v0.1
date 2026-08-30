@@ -10,6 +10,8 @@ import { KaryaMedia } from "@/components/ui/KaryaMedia";
 import { DAFTAR_KARYA, cariKaryaLocale } from "@/lib/data/karya";
 import { daftarLayanan } from "@/lib/data/layanan";
 import { copy, localizedAlternates, type Locale, withLocale } from "@/lib/i18n";
+import { JsonLd } from "@/components/seo/JsonLd";
+import { breadcrumbSchema, caseStudySchema } from "@/lib/seo/structured-data";
 
 type Params = { slug: string };
 
@@ -64,6 +66,26 @@ export function HalamanRincianKaryaContent({
 
   return (
     <main className="flex-1">
+      <JsonLd
+        data={[
+          caseStudySchema({
+            slug,
+            nama: karya.nama,
+            ringkasan: karya.ringkasan,
+            bidang: karya.bidang,
+            teknologi: karya.teknologi,
+            locale,
+          }),
+          breadcrumbSchema(
+            [
+              { name: "Ionowu", path: "/" },
+              { name: c.nav.work, path: "/karya" },
+              { name: karya.nama, path: `/karya/${slug}` },
+            ],
+            locale,
+          ),
+        ]}
+      />
       <Section className="border-b border-line pt-32">
         <Container width="prose">
           <Reveal>
