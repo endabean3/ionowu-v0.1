@@ -154,7 +154,10 @@ export const copy = {
         responseTitle: "Waktu balasan",
         responseBody: "Kami balas dalam 1x24 jam kerja lewat email yang Anda isi.",
         note:
-          "Saluran kontak langsung seperti WhatsApp, email resmi, dan lokasi kantor sedang disiapkan. Untuk sekarang, formulir ini adalah jalur utama.",
+          "Butuh jawaban lebih cepat? Hubungi kami langsung lewat WhatsApp atau email. Alamat kantor masih dalam proses dan akan diumumkan setelah resmi.",
+        directTitle: "Hubungi langsung",
+        waLabel: "WhatsApp",
+        emailLabel: "Email",
       },
     },
     values: [
@@ -274,7 +277,10 @@ export const copy = {
         responseTitle: "Reply time",
         responseBody: "We reply within one business day using the email you provide.",
         note:
-          "Direct channels such as WhatsApp, official email, and office location are being prepared. For now, this form is the main route.",
+          "Need a faster answer? Reach us directly on WhatsApp or by email. The office address is still being finalised and will be announced once official.",
+        directTitle: "Reach us directly",
+        waLabel: "WhatsApp",
+        emailLabel: "Email",
       },
     },
     values: [
@@ -393,7 +399,10 @@ export const copy = {
         responseTitle: "回复时间",
         responseBody: "我们会通过您填写的邮箱，在一个工作日内回复。",
         note:
-          "WhatsApp、官方邮箱和办公地点等直接联系方式正在准备中。当前请优先使用此表单。",
+          "需要更快回复？可直接通过 WhatsApp 或邮箱联系我们。办公地点仍在确定中，确认后会公布。",
+        directTitle: "直接联系",
+        waLabel: "WhatsApp",
+        emailLabel: "邮箱",
       },
     },
     values: [

@@ -1,4 +1,5 @@
 import { copy, withLocale, type Locale } from "@/lib/i18n";
+import { EMAIL_KONTAK, WA_E164 } from "@/lib/data/kontak";
 
 /**
  * Data terstruktur schema.org.
@@ -21,9 +22,6 @@ export const SITE_URL =
 const ORGANIZATION_ID = `${SITE_URL}/#organization`;
 const WEBSITE_ID = `${SITE_URL}/#website`;
 
-/** Alamat yang sudah dipakai publik di formulir kontak. */
-const CONTACT_EMAIL = "office@ionowu.com";
-
 export function organizationSchema(locale: Locale = "id") {
   return {
     "@context": "https://schema.org",
@@ -39,7 +37,8 @@ export function organizationSchema(locale: Locale = "id") {
     contactPoint: {
       "@type": "ContactPoint",
       contactType: "sales",
-      email: CONTACT_EMAIL,
+      email: EMAIL_KONTAK,
+      telephone: WA_E164,
       availableLanguage: ["id", "en", "zh"],
     },
   };
@@ -122,7 +121,8 @@ export function localServiceSchema(input: {
     description: input.deskripsi,
     url: `${SITE_URL}${input.path}`,
     parentOrganization: { "@id": ORGANIZATION_ID },
-    email: CONTACT_EMAIL,
+    email: EMAIL_KONTAK,
+    telephone: WA_E164,
     areaServed: input.wilayah.map((nama) => ({
       "@type": "AdministrativeArea",
       name: nama,

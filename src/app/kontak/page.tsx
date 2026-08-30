@@ -1,10 +1,11 @@
 import type { Metadata } from "next";
-import { Clock, ChatCircleDots } from "@phosphor-icons/react/dist/ssr";
+import { Clock } from "@phosphor-icons/react/dist/ssr";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { Container, Section } from "@/components/ui/Container";
 import { Card } from "@/components/ui/Card";
 import { Reveal } from "@/components/motion/Reveal";
 import { FormulirKontak } from "@/components/kontak/FormulirKontak";
+import { SaluranLangsung } from "@/components/kontak/SaluranLangsung";
 import { copy, localizedAlternates, type Locale } from "@/lib/i18n";
 
 export const metadata: Metadata = {
@@ -62,17 +63,11 @@ export function HalamanKontakContent({ locale }: { locale: Locale }) {
       <Section className="border-t border-line">
         <Container width="prose">
           <Reveal>
-            <div className="flex items-start gap-4">
-              <ChatCircleDots
-                size={22}
-                weight="light"
-                className="mt-0.5 shrink-0 text-ink-muted"
-                aria-hidden
-              />
-              <p className="text-small text-ink-muted">
-                {c.pages.contact.note}
-              </p>
-            </div>
+            {/* Dulu bagian ini cuma catatan bahwa saluran langsung "sedang
+                disiapkan". Sekarang nomornya sudah ada, jadi tempat yang sama
+                dipakai untuk menampilkannya — bukan ditambahkan sebagai
+                bagian baru yang membuat halaman makin panjang. */}
+            <SaluranLangsung locale={locale} />
           </Reveal>
         </Container>
       </Section>
