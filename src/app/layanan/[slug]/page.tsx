@@ -12,6 +12,8 @@ import { DAFTAR_LAYANAN, cariLayananLocale } from "@/lib/data/layanan";
 import { cariKaryaLocale } from "@/lib/data/karya";
 import { IKON_LAYANAN } from "@/lib/data/ikon-layanan";
 import { copy, localizedAlternates, type Locale, withLocale } from "@/lib/i18n";
+import { JsonLd } from "@/components/seo/JsonLd";
+import { breadcrumbSchema, serviceSchema } from "@/lib/seo/structured-data";
 
 type Params = { slug: string };
 
@@ -67,6 +69,24 @@ export function HalamanRincianLayananContent({
 
   return (
     <main className="flex-1">
+      <JsonLd
+        data={[
+          serviceSchema({
+            slug,
+            judul: layanan.judul,
+            deskripsi: layanan.masalah,
+            locale,
+          }),
+          breadcrumbSchema(
+            [
+              { name: "Ionowu", path: "/" },
+              { name: c.nav.services, path: "/layanan" },
+              { name: layanan.judul, path: `/layanan/${slug}` },
+            ],
+            locale,
+          ),
+        ]}
+      />
       <Section className="glow-field border-b border-line pt-32 pb-16">
         <Container width="prose">
           <Reveal>

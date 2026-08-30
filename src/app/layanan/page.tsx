@@ -9,6 +9,8 @@ import { RevealGroup, RevealItem } from "@/components/motion/Reveal";
 import { daftarLayanan } from "@/lib/data/layanan";
 import { IKON_LAYANAN } from "@/lib/data/ikon-layanan";
 import { copy, localizedAlternates, withLocale, type Locale } from "@/lib/i18n";
+import { JsonLd } from "@/components/seo/JsonLd";
+import { breadcrumbSchema, itemListSchema } from "@/lib/seo/structured-data";
 
 export const metadata: Metadata = {
   title: "Layanan",
@@ -33,6 +35,21 @@ export function HalamanLayananContent({ locale }: { locale: Locale }) {
 
   return (
     <main className="flex-1">
+      <JsonLd
+        data={[
+          itemListSchema(
+            layanan.map((l) => ({ name: l.judul, path: `/layanan/${l.slug}` })),
+            locale,
+          ),
+          breadcrumbSchema(
+            [
+              { name: "Ionowu", path: "/" },
+              { name: c.nav.services, path: "/layanan" },
+            ],
+            locale,
+          ),
+        ]}
+      />
       <PageHeader
         title={c.pages.services.title}
         lead={c.pages.services.lead}

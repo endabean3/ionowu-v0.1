@@ -8,6 +8,8 @@ import { AjakanPenutup } from "@/components/sections/AjakanPenutup";
 import { RevealGroup, RevealItem } from "@/components/motion/Reveal";
 import { daftarKarya } from "@/lib/data/karya";
 import { copy, localizedAlternates, type Locale, withLocale } from "@/lib/i18n";
+import { JsonLd } from "@/components/seo/JsonLd";
+import { breadcrumbSchema, itemListSchema } from "@/lib/seo/structured-data";
 
 export const metadata: Metadata = {
   title: "Karya",
@@ -32,6 +34,21 @@ export function HalamanKaryaContent({ locale }: { locale: Locale }) {
 
   return (
     <main className="flex-1">
+      <JsonLd
+        data={[
+          itemListSchema(
+            karya.map((k) => ({ name: k.nama, path: `/karya/${k.slug}` })),
+            locale,
+          ),
+          breadcrumbSchema(
+            [
+              { name: "Ionowu", path: "/" },
+              { name: c.nav.work, path: "/karya" },
+            ],
+            locale,
+          ),
+        ]}
+      />
       <PageHeader
         title={c.pages.work.title}
         lead={c.pages.work.lead}
