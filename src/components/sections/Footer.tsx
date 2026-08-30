@@ -23,6 +23,13 @@ export function Footer() {
     { label: c.nav.work, href: withLocale("/karya", locale) },
     { label: c.nav.about, href: withLocale("/tentang", locale) },
     { label: c.nav.contact, href: withLocale("/kontak", locale) },
+    // Halaman lokal hanya ada dalam bahasa Indonesia, jadi tautannya pun
+    // hanya muncul di versi Indonesia. Tautan internal ini penting: halaman
+    // yang tidak ditunjuk dari mana-mana jarang dirayapi, sebagus apa pun
+    // isinya.
+    ...(locale === "id"
+      ? [{ label: "Programmer Trenggalek", href: "/programmer-trenggalek" }]
+      : []),
   ];
 
   return (

@@ -100,6 +100,37 @@ export function caseStudySchema(input: {
   };
 }
 
+/**
+ * Layanan dengan cakupan wilayah — untuk halaman lokal.
+ *
+ * Memakai `ProfessionalService`, BUKAN `LocalBusiness`, dan itu keputusan
+ * sadar: `LocalBusiness` menuntut `address` yang sungguhan, sementara alamat
+ * kantor Ionowu masih `[BELUM ADA]`. Mengarang alamat demi rich result adalah
+ * cara tercepat kehilangan kepercayaan Google sekaligus kepercayaan pembaca.
+ * `areaServed` menyatakan wilayah layanan tanpa mengklaim lokasi fisik.
+ */
+export function localServiceSchema(input: {
+  nama: string;
+  deskripsi: string;
+  path: string;
+  wilayah: string[];
+}) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "ProfessionalService",
+    name: input.nama,
+    description: input.deskripsi,
+    url: `${SITE_URL}${input.path}`,
+    parentOrganization: { "@id": ORGANIZATION_ID },
+    email: CONTACT_EMAIL,
+    areaServed: input.wilayah.map((nama) => ({
+      "@type": "AdministrativeArea",
+      name: nama,
+    })),
+    knowsLanguage: ["id", "en", "zh"],
+  };
+}
+
 /** Jejak navigasi — membuat Google menampilkan jalur, bukan URL mentah. */
 export function breadcrumbSchema(
   trail: { name: string; path: string }[],
