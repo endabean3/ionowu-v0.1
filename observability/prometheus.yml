@@ -1,0 +1,43 @@
+# Konfigurasi Prometheus untuk host produksi Ionowu.
+#
+# Target sengaja ditembak dari LUAR lewat https://ionowu.com, bukan langsung ke
+# kontainer. Dengan begitu satu probe sekaligus menguji DNS, sertifikat TLS,
+# Traefik, dan aplikasinya — persis jalur yang dilalui pengunjung. Probe yang
+# menembak kontainer langsung akan tetap hijau walau Traefik atau TLS-nya rusak.
+
+global:
+  scrape_interval: 30s
+  evaluation_interval: 30s
+  external_labels:
+    host: srv1882569
+
+rule_files:
+  - /etc/prometheus/alerts/*.yaml
+
+scrape_configs:
+  # Prometheus memantau dirinya sendiri — kalau ini hilang dari grafik, berarti
+  # yang mati justru pemantauannya.
+  - job_name: prometheus
+    static_configs:
+      - targets: ["127.0.0.1:9090"]
+
+  # Nama job HARUS `blackbox`: aturan di alerts/ionowu-web.rules.yaml menyaring
+  # dengan `job="blackbox"`.
+  - job_name: blackbox
+    metrics_path: /probe
+    params:
+      module: [http_2xx]
+    static_configs:
+      # Satu target saja, dan sengaja: `probe_ssl_earliest_cert_expiry` muncul
+      # per target, jadi menambah target berarti satu alert sertifikat berubah
+      # jadi beberapa alert kembar untuk sertifikat yang sama persis.
+      # /health/ready adalah sinyal terjujur — ia ikut memeriksa database.
+      - targets:
+          - https://ionowu.com/health/ready
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: __param_target
+      - source_labels: [__param_target]
+        target_label: instance
+      - target_label: __address__
+        replacement: ionowu-blackbox:9115
