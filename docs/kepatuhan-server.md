@@ -87,7 +87,7 @@ Arti kolom status:
 | 34 | Deploy memakai digest, bukan tag (DEP-01, IMG-09) | Terverifikasi di produksi | `compose.yaml` memakai sintaks `@${IMAGE_DIGEST:?…}` sehingga deploy tanpa digest gagal seketika — ditegakkan Compose, bukan kedisiplinan operator. Kontainer yang berjalan memang menunjuk digest, dengan label `org.opencontainers.image.revision=586eb73…`. |
 | 35 | Deploy ke staging berhasil (DEP-06) | Di luar repo | Belum ada lingkungan staging yang terlihat di host ini; yang berjalan hanya produksi. |
 | 36 | Rollback diuji (DEP-04) | Di luar repo | Prosedur dan tabel catatan di `docs/deploy.md`, termasuk aturan migrasi kompatibel-mundur yang membuat rollback aman. Belum pernah dijalankan. |
-| 37 | Deployment tanpa downtime (DEP-07) | Siap, tunggu server | Dua replika benar-benar berjalan dan dua-duanya `healthy`, dengan `order: start-first` dan readiness gate. Yang belum ada adalah **bukti** rollout tanpa satu pun permintaan gagal — caranya di `docs/deploy.md`. |
+| 37 | Deployment tanpa downtime (DEP-07) | **Belum** | **Diukur saat deploy 30 Agu 2026, dan gagal:** probe dari luar tiap 0,4 detik selama rollout mencatat 250 permintaan sukses dan **13 gagal, semuanya `502`** — sekitar **5 detik** situs benar-benar tidak melayani. Penyebabnya struktural, bukan salah setelan: `deploy.update_config.order: start-first` dan `failure_action: rollback` di `compose.yaml` hanya berlaku di Docker Swarm. Di Dokploy tipe **Compose**, `docker compose up -d` membuat ulang kedua replika tanpa menunggu yang baru lulus readiness, jadi ada jeda tanpa backend sama sekali. |
 | 38 | Audit kepatuhan §7 lulus penuh | Di luar repo | Menunggu butir 23, 28, dan 31 di atas. |
 
 > Penomoran mengikuti urutan pengerjaan, bukan penomoran dokumen standar;
@@ -109,7 +109,16 @@ Tiga butir di atas berstatus **Belum**, plus satu catatan operasional:
    Sampai itu dilakukan, kalimat "tidak ada yang memberi tahu kalau situs
    mati" masih berlaku.
 3. **SEC-02 — belum OIDC terpusat.** Masih Google OAuth langsung.
-4. **`APP_VERSION=main` di produksi.** Image-nya sendiri sudah dideploy per
+4. **DEP-07 tidak terpenuhi, dan pilihannya saling meniadakan.** Dokploy tipe
+   **Compose** menghormati `depends_on: service_completed_successfully`
+   sehingga migrasi dijamin selesai sebelum aplikasi baru menyentuh skema
+   (DAT-05), tetapi tidak punya rolling update. Tipe **Application** (Swarm)
+   memberi rolling update sungguhan, tetapi mengabaikan `depends_on` diam-diam
+   sehingga migrasi harus dipindah ke pre-deploy di host. Salah satu harus
+   dikorbankan, atau rollout dijalankan bertahap secara manual. Ini keputusan
+   arsitektur, bukan sesuatu yang bisa diperbaiki dengan menambah opsi di
+   `compose.yaml`.
+5. **`APP_VERSION=main` di produksi.** Image-nya sendiri sudah dideploy per
    digest, tetapi variabel versi ikut `IMAGE_TAG`, sehingga setiap log dan
    trace produksi menyebut dirinya "main". Saat insiden, tidak ada cara tahu
    build mana yang sedang berjalan — padahal itu justru yang dibutuhkan untuk
