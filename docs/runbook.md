@@ -138,3 +138,39 @@ di sisi Resend (kunci API atau verifikasi domain), bukan di aplikasi.
 
 Prosedur lengkap beserta uji pemulihan wajib ada di
 [docs/deploy.md](deploy.md#uji-pemulihan-dat-07).
+
+---
+
+## Stack pemantauan
+
+Prometheus dan blackbox_exporter berjalan di host sebagai stack
+`ionowu-monitoring`, terpisah dari aplikasi. Berkasnya ada di
+`/opt/ionowu-monitoring/` di server, sumbernya di `observability/` di repo ini.
+
+UI Prometheus **tidak** diekspos ke internet — port hanya diikat ke loopback.
+Menjangkaunya lewat SSH tunnel:
+
+```bash
+ssh -N -L 9090:127.0.0.1:9090 root@76.13.16.85
+```
+
+Lalu buka `http://localhost:9090` — halaman **Alerts** memperlihatkan status
+kelima aturan, **Targets** memperlihatkan apakah probe masih hidup.
+
+Setelah mengubah `prometheus.yml` atau berkas di `alerts/`, muat ulang tanpa
+kehilangan riwayat metrik:
+
+```bash
+ssh root@76.13.16.85 'curl -s -X POST http://127.0.0.1:9090/-/reload'
+```
+
+Periksa dulu sebelum memuat ulang — konfigurasi yang salah membuat Prometheus
+menolak reload dan tetap memakai konfigurasi lama:
+
+```bash
+ssh root@76.13.16.85 'cd /opt/ionowu-monitoring && docker compose exec prometheus promtool check config /etc/prometheus/prometheus.yml'
+```
+
+> **Belum ada Alertmanager.** Alert berubah status di UI Prometheus, tetapi
+> tidak dikirim ke mana pun. Sampai itu dipasang, halaman Alerts harus dilihat
+> sendiri — jangan menganggap "tidak ada kabar" berarti "tidak ada masalah".

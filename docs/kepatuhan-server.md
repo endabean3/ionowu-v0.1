@@ -13,6 +13,7 @@ Arti kolom status:
 - **Selesai** — sudah ada di repo dan diverifikasi lokal atau di CI.
 - **Siap, tunggu server** — konfigurasinya lengkap di repo, tetapi baru
   terpenuhi setelah dipasang atau didaftarkan di server.
+- **Sebagian** — sudah berjalan, tetapi belum menutup seluruh maksud butirnya.
 - **Belum** — ada celah nyata yang masih terbuka.
 - **Di luar repo** — tidak bisa diselesaikan dari repo ini sama sekali.
 
@@ -75,7 +76,7 @@ Arti kolom status:
 | 28 | OpenTelemetry terpasang (OBS-01) | **Belum** | Kodenya siap (`src/instrumentation.ts`, eksporter OTLP standar), tetapi di produksi `OTEL_EXPORTER_OTLP_ENDPOINT` **kosong** dan tidak ada satu pun kontainer kolektor di host. Artinya tidak ada trace yang benar-benar keluar dari aplikasi. Butuh kolektor OTLP dan pengisian variabel itu di Dokploy. |
 | 29 | `trace_id` di setiap log (OBS-02) | Selesai | `src/lib/observability/log.ts`; seluruh `console.error` sisi server sudah diganti. Diverifikasi lokal: permintaan ke `/health/ready` menghasilkan baris log JSON berisi `trace_id` dan `span_id`. |
 | 30 | `/health/live` dan `/health/ready` (RUN-08) | Terverifikasi di produksi | `https://ionowu.com/health/live` membalas 200 tanpa menyentuh dependensi. `/health/ready` membalas 200 `ready` dengan ketiga pemeriksaan lulus (`database`, `contact_pipeline`, `admin_auth`), header `cache-control: no-store`. Healthcheck kontainer juga `exit=0`. `live` sengaja tidak memeriksa database supaya database yang mati tidak memicu restart aplikasi yang sebenarnya sehat. |
-| 31 | Dashboard dan minimal satu alert (OBS-05) | **Belum** | `observability/dashboards/ionowu-web.json` dan lima alert di `observability/alerts/ionowu-web.rules.yaml` sudah ditulis, tetapi di host **tidak ada** Prometheus, Grafana, Alertmanager, blackbox_exporter, maupun cAdvisor. Jadi belum ada satu pun alert yang bisa menyala. |
+| 31 | Dashboard dan minimal satu alert (OBS-05) | **Sebagian** | Prometheus v3.14.0 dan blackbox_exporter v0.28.0 sudah terpasang di host sebagai stack `ionowu-monitoring` (`observability/compose.monitoring.yaml`), keduanya `healthy`. Probe ke `https://ionowu.com/health/ready` aktif: `probe_success=1`, 87 ms, sertifikat tersisa 89 hari. Kelima aturan alert termuat dan `inactive`. **Yang masih kurang:** (a) belum ada Alertmanager, jadi alert menyala hanya di UI Prometheus dan tidak ada yang dikirimi — perlu tujuan notifikasi dari Anda; (b) `IonowuWebSeringRestart` dan `IonowuWebMendekatiBatasMemori` memakai metrik cAdvisor yang belum ada, jadi dua aturan itu tidak akan pernah menyala; (c) dashboard Grafana masih berupa berkas JSON, belum ada Grafana yang memuatnya. |
 | 32 | Runbook tertaut dari alert (OBS-08) | Selesai | `docs/runbook.md`; judul bagiannya sama persis dengan nama alert, dan setiap alert memuat `runbook_url`. |
 
 ## Tahap 7 — Deployment
@@ -100,10 +101,12 @@ Tiga butir di atas berstatus **Belum**, plus satu catatan operasional:
 1. **OBS-01 — OTel tidak mengirim ke mana pun.** `OTEL_EXPORTER_OTLP_ENDPOINT`
    kosong dan tidak ada kolektor di host. `trace_id` tetap terbentuk di log,
    tapi tidak ada trace yang tersimpan atau bisa ditelusuri.
-2. **OBS-05 — tidak ada stack pemantauan.** Tanpa Prometheus dan
-   blackbox_exporter, kelima alert dan dashboard di `observability/` tidak
-   melakukan apa-apa. Ini yang paling berisiko: saat ini tidak ada yang
-   memberi tahu kalau situs mati.
+2. **OBS-05 — pemantauan sudah ada, pemberitahuannya belum.** Prometheus dan
+   blackbox_exporter kini berjalan dan benar-benar mengukur situs, tetapi
+   tanpa Alertmanager alert hanya berubah warna di UI Prometheus yang tidak
+   ditonton siapa pun. Jadi kalimat "tidak ada yang memberi tahu kalau situs
+   mati" masih berlaku sampai Alertmanager dipasang dan tujuan notifikasinya
+   ditentukan. Dua dari lima aturan juga masih butuh cAdvisor.
 3. **SEC-02 — belum OIDC terpusat.** Masih Google OAuth langsung.
 4. **`APP_VERSION=main` di produksi.** Image-nya sendiri sudah dideploy per
    digest, tetapi variabel versi ikut `IMAGE_TAG`, sehingga setiap log dan
@@ -121,8 +124,10 @@ Tiga butir di atas berstatus **Belum**, plus satu catatan operasional:
    standar, tetapi tidak ada di repo maupun di server. Kalau itu gerbang
    resmi, sebaiknya ikut masuk repo dan dipanggil dari CI supaya pelanggaran
    ketahuan sebelum deploy, bukan sesudahnya.
-3. **Alokasi port dari `registry-port.md`**, atau konfirmasi bahwa aplikasi
+3. **Tujuan notifikasi alert** (email, Telegram, Slack, atau lainnya) supaya
+   Alertmanager bisa dipasang dan alert benar-benar sampai ke orang.
+4. **Alokasi port dari `registry-port.md`**, atau konfirmasi bahwa aplikasi
    ini memang tidak butuh port host karena seluruh trafiknya lewat Traefik.
-4. **Detail penyedia OIDC terpusat** (issuer, client, pemetaan klaim ke role).
-5. **Keputusan soal butir 4**: repo ini pindah ke templat standar, atau
+5. **Detail penyedia OIDC terpusat** (issuer, client, pemetaan klaim ke role).
+6. **Keputusan soal butir 4**: repo ini pindah ke templat standar, atau
    dicatat sebagai pengecualian.

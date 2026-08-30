@@ -1,0 +1,117 @@
+# ---------------------------------------------------------------------------
+# Ionowu — stack pemantauan `ionowu-monitoring`
+#
+# Menutup OBS-05: sebelum ini tidak ada satu pun yang memberi tahu kalau situs
+# mati. Isinya sengaja minimal — Prometheus dan blackbox_exporter — supaya
+# alert paling penting bisa menyala hari ini, bukan nanti setelah stack besar
+# selesai dirancang.
+#
+# Kepatuhan: IMG-02 (digest terkunci), RUN-01 (nonroot), RUN-05 (batas sumber
+# daya), RUN-16 (log driver local), ISO-06 (tidak menyentuh dokploy-network,
+# jadi tidak ada route publik sama sekali).
+#
+# Akses UI: TIDAK diekspos ke internet. Port hanya diikat ke 127.0.0.1, jadi
+# dijangkau lewat SSH tunnel:
+#   ssh -N -L 9090:127.0.0.1:9090 root@76.13.16.85
+# lalu buka http://localhost:9090
+# ---------------------------------------------------------------------------
+
+name: ionowu-monitoring
+
+x-defaults: &defaults
+  restart: unless-stopped
+  security_opt:
+    - no-new-privileges:true
+  cap_drop:
+    - ALL
+  read_only: true
+  logging:
+    driver: local
+    options:
+      max-size: 10m
+      max-file: "3"
+
+services:
+  prometheus:
+    <<: *defaults
+    image: prom/prometheus:v3.14.0@sha256:5ce7540c3c00ef4ab0c9d2c995c6a5b9c421f44b4a115d97a2c7af3b1c21cbb0
+    container_name: ionowu-prometheus
+    # UID 65534 (nobody) — sama dengan pemilik /prometheus di dalam image,
+    # sehingga volume data ikut terbentuk dengan kepemilikan yang benar.
+    user: "65534:65534"
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.path=/prometheus
+      # Retensi ganda: waktu DAN ukuran. Batas ukuran yang menjaga disk host
+      # tidak habis diam-diam kalau target bertambah banyak.
+      - --storage.tsdb.retention.time=30d
+      - --storage.tsdb.retention.size=4GB
+      - --web.listen-address=0.0.0.0:9090
+      - --web.enable-lifecycle
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./alerts:/etc/prometheus/alerts:ro
+      - prometheus-data:/prometheus
+    tmpfs:
+      - /tmp:size=64m,mode=1777
+    ports:
+      # Diikat ke loopback saja — tidak terjangkau dari internet.
+      - "127.0.0.1:9090:9090"
+    networks:
+      - monitoring
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://127.0.0.1:9090/-/healthy"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+    stop_grace_period: 30s
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 512M
+        reservations:
+          memory: 128M
+
+  blackbox:
+    <<: *defaults
+    image: prom/blackbox-exporter:v0.28.0@sha256:e753ff9f3fc458d02cca5eddab5a77e1c175eee484a8925ac7d524f04366c2fc
+    container_name: ionowu-blackbox
+    user: "65534:65534"
+    command:
+      - --config.file=/etc/blackbox/blackbox.yml
+    volumes:
+      - ./blackbox.yml:/etc/blackbox/blackbox.yml:ro
+    # Tidak ada `ports:` — hanya Prometheus yang perlu menjangkaunya, lewat
+    # jaringan internal stack ini.
+    networks:
+      - monitoring
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://127.0.0.1:9115/-/healthy"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    stop_grace_period: 15s
+    deploy:
+      resources:
+        limits:
+          cpus: "0.25"
+          memory: 128M
+        reservations:
+          memory: 32M
+
+networks:
+  monitoring:
+    name: ionowu-monitoring
+
+volumes:
+  prometheus-data:
+    name: ionowu-monitoring-promdata
+    labels:
+      # DAT-04 — riwayat metrik berguna, tapi bukan data bisnis: kalau hilang,
+      # tidak ada yang tidak bisa dipulihkan. Backup harian tidak sepadan
+      # dengan ukurannya.
+      ionowu.backup: "false"
+      ionowu.app: ionowu-monitoring
