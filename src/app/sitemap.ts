@@ -43,6 +43,23 @@ function entry(
   };
 }
 
+/* Halaman yang HANYA punya versi Indonesia. Sengaja tidak memakai `entry()`:
+   helper itu selalu memasang anotasi hreflang untuk ketiga bahasa, dan
+   menunjuk /en maupun /zh yang tidak ada hanya akan menghasilkan 404 di mata
+   perayap. */
+function entryIdSaja(
+  path: string,
+  changeFrequency: MetadataRoute.Sitemap[number]["changeFrequency"],
+  priority: number,
+): MetadataRoute.Sitemap[number] {
+  return {
+    url: `${siteUrl}${path}`,
+    lastModified,
+    changeFrequency,
+    priority,
+  };
+}
+
 export default function sitemap(): MetadataRoute.Sitemap {
   const halamanUtama: MetadataRoute.Sitemap = [
     entry("/", "monthly", 1),
@@ -60,5 +77,9 @@ export default function sitemap(): MetadataRoute.Sitemap {
     entry(`/karya/${karya.slug}`, "yearly", 0.5),
   );
 
-  return [...halamanUtama, ...halamanLayanan, ...halamanKarya];
+  const halamanLokal: MetadataRoute.Sitemap = [
+    entryIdSaja("/programmer-trenggalek", "monthly", 0.7),
+  ];
+
+  return [...halamanUtama, ...halamanLokal, ...halamanLayanan, ...halamanKarya];
 }
