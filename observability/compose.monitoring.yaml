@@ -40,7 +40,7 @@ services:
     # sehingga volume data ikut terbentuk dengan kepemilikan yang benar.
     user: "65534:65534"
     command:
-      - --config.file=/etc/prometheus/prometheus.yml
+      - --config.file=/etc/prometheus/conf/prometheus.yml
       - --storage.tsdb.path=/prometheus
       # Retensi ganda: waktu DAN ukuran. Batas ukuran yang menjaga disk host
       # tidak habis diam-diam kalau target bertambah banyak.
@@ -49,8 +49,11 @@ services:
       - --web.listen-address=0.0.0.0:9090
       - --web.enable-lifecycle
     volumes:
-      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
-      - ./alerts:/etc/prometheus/alerts:ro
+      # Yang di-mount DIREKTORI, bukan berkas satuan. Bind mount berkas tunggal
+      # terikat ke inode: begitu berkasnya diganti (rsync, tar, editor yang
+      # menulis lewat berkas sementara), kontainer tetap membaca isi yang lama
+      # dan `/-/reload` seolah berhasil padahal tidak mengubah apa pun.
+      - ./:/etc/prometheus/conf:ro
       - prometheus-data:/prometheus
     tmpfs:
       - /tmp:size=64m,mode=1777
@@ -80,9 +83,10 @@ services:
     container_name: ionowu-blackbox
     user: "65534:65534"
     command:
-      - --config.file=/etc/blackbox/blackbox.yml
+      - --config.file=/etc/blackbox/conf/blackbox.yml
     volumes:
-      - ./blackbox.yml:/etc/blackbox/blackbox.yml:ro
+      # Direktori, bukan berkas satuan — alasannya sama seperti di Prometheus.
+      - ./:/etc/blackbox/conf:ro
     # Tidak ada `ports:` — hanya Prometheus yang perlu menjangkaunya, lewat
     # jaringan internal stack ini.
     networks:
@@ -101,6 +105,56 @@ services:
           memory: 128M
         reservations:
           memory: 32M
+
+  # --- cAdvisor: metrik per kontainer ---------------------------------------
+  # Menghidupkan dua aturan yang tanpa ini tidak punya data sama sekali:
+  # IonowuWebSeringRestart dan IonowuWebMendekatiBatasMemori.
+  #
+  # PERHATIAN — layanan ini sengaja TIDAK memakai anchor `*defaults`, dan itu
+  # penurunan keamanan yang disadari: cAdvisor bekerja dengan membaca cgroup,
+  # /sys, dan state Docker milik host, jadi `cap_drop: ALL` membuatnya buta.
+  # Yang bisa dilakukan sudah dilakukan: seluruh mount host read-only, tidak
+  # ada port yang dipublikasikan, hanya Prometheus di jaringan ini yang bisa
+  # menjangkaunya, dan image tetap dikunci ke digest.
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:v0.55.1@sha256:3de2bd5203120b866d74a9b283b2ffb8ec382fbf9dc321814700c6ea6f44ec57
+    container_name: ionowu-cadvisor
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    command:
+      # Hanya kontainer Docker yang dipantau — bukan seluruh cgroup host.
+      - --docker_only=true
+      - --housekeeping_interval=30s
+      # Label kontainer TIDAK disimpan semuanya: label Traefik dan Dokploy
+      # akan meledakkan kardinalitas metrik. Hanya dua yang benar-benar dipakai
+      # untuk mengelompokkan yang diizinkan lewat.
+      - --store_container_labels=false
+      - --whitelisted_container_labels=com.docker.compose.project,com.docker.compose.service
+      - --disable_metrics=percpu,sched,process,hugetlb,referenced_memory,cpu_topology,resctrl
+    devices:
+      - /dev/kmsg:/dev/kmsg
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+      - /dev/disk/:/dev/disk:ro
+    networks:
+      - monitoring
+    logging:
+      driver: local
+      options:
+        max-size: 10m
+        max-file: "3"
+    stop_grace_period: 15s
+    deploy:
+      resources:
+        limits:
+          cpus: "0.3"
+          memory: 256M
+        reservations:
+          memory: 64M
 
 networks:
   monitoring:
