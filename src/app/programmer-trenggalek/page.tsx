@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ArrowRight, Check, MapPin } from "@phosphor-icons/react/dist/ssr";
+import { ArrowRight, Check, MapPin, WhatsappLogo } from "@phosphor-icons/react/dist/ssr";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { Container, Section } from "@/components/ui/Container";
 import { Card } from "@/components/ui/Card";
@@ -10,6 +10,7 @@ import { Reveal, RevealGroup, RevealItem } from "@/components/motion/Reveal";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { daftarLayanan } from "@/lib/data/layanan";
 import { daftarKarya } from "@/lib/data/karya";
+import { WA_TAMPIL, waHref } from "@/lib/data/kontak";
 import {
   breadcrumbSchema,
   localServiceSchema,
@@ -23,9 +24,9 @@ import {
    Pesaing di kata kunci yang sama semuanya punya halaman khusus.
 
    YANG TIDAK ADA DI SINI, DAN SENGAJA:
-   - Alamat kantor dan nomor telepon. Masih `[BELUM ADA]` (dokumen 01 dan 07
-     Tahap 0), dan kontak pribadi dari CV tidak boleh dipakai sebagai kontak
-     perusahaan tanpa keputusan bisnis lebih dulu.
+   - Alamat kantor. Masih `[BELUM ADA]`. WhatsApp dan email resmi sudah ada
+     dan dipasang di halaman ini, tetapi alamat fisik belum — itu sebabnya
+     skemanya tetap ProfessionalService, bukan LocalBusiness.
    - Harga, paket, dan lama pengerjaan. Belum pernah ditetapkan.
    - Klaim "kantor di Trenggalek". Yang ditulis adalah WILAYAH LAYANAN, karena
      itu yang benar-benar bisa dipertanggungjawabkan.
@@ -242,9 +243,16 @@ export default function HalamanProgrammerTrenggalek() {
               Ceritakan proses yang sedang berjalan dan bagian mana yang paling
               memakan waktu. Kami balas dalam 1x24 jam kerja.
             </p>
-            <div className="mt-8">
-              <Button href="/kontak">
-                Konsultasi
+            {/* WhatsApp ditaruh sejajar dengan formulir, bukan di bawahnya:
+                untuk calon klien daerah, pesan singkat hampir selalu lebih
+                cepat dimulai daripada mengisi formulir. */}
+            <div className="mt-8 flex flex-wrap items-center gap-4">
+              <Button href={waHref("Halo Ionowu, saya dari Trenggalek dan ingin berkonsultasi soal")}>
+                <WhatsappLogo size={18} weight="fill" aria-hidden />
+                WhatsApp {WA_TAMPIL}
+              </Button>
+              <Button href="/kontak" variant="ghost">
+                Isi formulir
                 <ArrowRight size={18} aria-hidden />
               </Button>
             </div>

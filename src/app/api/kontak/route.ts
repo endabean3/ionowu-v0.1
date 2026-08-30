@@ -8,12 +8,13 @@ import {
 } from "@/lib/leads/rate-limit";
 import { processResendOutboxEvent } from "@/lib/outbox/resend";
 import { isLocale, type Locale } from "@/lib/i18n";
+import { EMAIL_KONTAK } from "@/lib/data/kontak";
 import { errorFields, log } from "@/lib/observability/log";
 
 /* ============================================================
    PENERIMA FORMULIR KONTAK
 
-   Tujuan sudah dikonfirmasi: office@ionowu.com.
+   Tujuan sudah dikonfirmasi: io@ionowu.com.
 
    STATUS PENGIRIMAN — WAJIB DIBACA SEBELUM DIANGGAP SELESAI:
    Form hanya menerima pesan kalau database, Resend, dan cron secret tersedia.
@@ -32,7 +33,7 @@ import { errorFields, log } from "@/lib/observability/log";
       alamat yang sama dengan email pendaftaran akun Resend. Begitu domain
       ionowu.com diverifikasi di Resend (Tambah Domain → catatan DNS →
       tunggu terverifikasi), ganti jadi alamat @ionowu.com supaya bisa
-      mengirim ke office@ionowu.com dari alamat sendiri.
+      mengirim ke io@ionowu.com dari alamat sendiri.
 
    Larangan yang sudah dipenuhi (dokumen 05):
    - Semua isian diperiksa ulang di server, bukan percaya pemeriksaan browser.
@@ -41,7 +42,7 @@ import { errorFields, log } from "@/lib/observability/log";
      aktif; IP hanya dipakai dari header proxy yang dipercaya secara eksplisit.
    ============================================================ */
 
-const ALAMAT_TUJUAN = "office@ionowu.com";
+const ALAMAT_TUJUAN = EMAIL_KONTAK;
 const ALAMAT_DARI = "Ionowu <onboarding@resend.dev>"; // TODO: ganti ke @ionowu.com setelah domain terverifikasi di Resend
 const SITE_ORIGIN = new URL(
   process.env.NEXT_PUBLIC_SITE_URL ??

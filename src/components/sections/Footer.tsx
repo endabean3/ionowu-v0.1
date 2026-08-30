@@ -5,14 +5,17 @@ import { usePathname } from "next/navigation";
 import { Container } from "@/components/ui/Container";
 import { Logo } from "@/components/ui/Logo";
 import { copy, localeFromPath, withLocale } from "@/lib/i18n";
+import { EMAIL_KONTAK, WA_TAMPIL, waHref } from "@/lib/data/kontak";
 
 /**
  * Kaki halaman (dokumen 03).
  *
- * Alamat kantor, telepon, dan tautan media sosial resmi BELUM diisi —
- * ditandai `[BELUM ADA]` di dokumen 01 dan 07 Tahap 0. Sengaja tidak diisi
- * dengan kontak pribadi Novenda dari CV; itu keputusan bisnis yang perlu
- * dikonfirmasi dulu, bukan sesuatu yang boleh diasumsikan.
+ * WhatsApp dan email resmi sudah ditetapkan dan ditampilkan di sini —
+ * keduanya diambil dari src/lib/data/kontak.ts supaya nomor yang muncul di
+ * kaki halaman tidak pernah berbeda dari yang muncul di halaman Kontak.
+ *
+ * Alamat kantor dan tautan media sosial MASIH `[BELUM ADA]` (dokumen 01 dan
+ * 07 Tahap 0), jadi tetap tidak ditulis — bukan lupa.
  */
 export function Footer() {
   const tahun = new Date().getFullYear();
@@ -52,6 +55,23 @@ export function Footer() {
               ))}
             </ul>
           </nav>
+        </div>
+
+        <div className="flex flex-wrap gap-x-8 gap-y-3 border-t border-line pt-8 text-small">
+          <a
+            href={waHref()}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-ink-muted transition-colors duration-mid ease-out hover:text-ink"
+          >
+            WhatsApp {WA_TAMPIL}
+          </a>
+          <a
+            href={`mailto:${EMAIL_KONTAK}`}
+            className="text-ink-muted transition-colors duration-mid ease-out hover:text-ink"
+          >
+            {EMAIL_KONTAK}
+          </a>
         </div>
 
         <div className="flex flex-col gap-2 border-t border-line pt-8 text-small text-ink-muted sm:flex-row sm:items-center sm:justify-between">
