@@ -123,7 +123,18 @@ Tiga butir di atas berstatus **Belum**, plus satu catatan operasional:
    trace produksi menyebut dirinya "main". Saat insiden, tidak ada cara tahu
    build mana yang sedang berjalan — padahal itu justru yang dibutuhkan untuk
    memutuskan rollback. Sebaiknya diisi commit sha atau digest.
-6. **Notifikasi lead gagal permanen (ditemukan 30 Agustus 2026).** Diuji
+6. **Formulir kontak sempat rusak total (ditemukan & diperbaiki 31 Agustus
+   2026).** Setiap pengunjung yang menekan kirim menerima 503 — lead tidak
+   pernah bisa tersimpan sama sekali. Dua sebab: (a) `drizzle/roles/
+   ionowu_runtime.sql` tidak pernah dijalankan ke database produksi, sehingga
+   role aplikasi tidak punya hak apa pun atas tabel; (b) `TENANT_ID=` kosong
+   diloloskan `??` sehingga setiap insert memakai tenant_id kosong. Keduanya
+   sudah diperbaiki dan diverifikasi ujung-ke-ujung: `{"ok":true}`, lead
+   tersimpan, outbox `sent`. **Pelajaran yang penting dicatat:**
+   `/health/ready` tetap hijau sepanjang kejadian karena pemeriksaannya hanya
+   `select 1`, yang tidak butuh hak tabel — probe yang lulus tidak sama dengan
+   aplikasi yang berfungsi.
+7. **Notifikasi lead gagal permanen (ditemukan 30 Agustus 2026).** Diuji
    langsung ke API Resend dari server: alamat pengirim sandbox
    (`onboarding@resend.dev`) menolak mengirim ke `io@ionowu.com` dengan
    `403 validation_error` — sandbox HANYA boleh mengirim ke alamat yang
