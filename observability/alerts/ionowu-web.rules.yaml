@@ -79,6 +79,55 @@ groups:
           description: "Kontainer mendekati batas RUN-05 dan berisiko dibunuh OOM."
           runbook_url: https://github.com/endabean3/ionowu-v0.1/blob/main/docs/runbook.md#ionowuwebmendekatibatasmemori
 
+      # --- Notifikasi lead -------------------------------------------------
+      # Dipasang setelah kejadian 30 Agustus 2026: seluruh notifikasi lead
+      # gagal permanen berhari-hari tanpa satu pun sinyal. Lead tetap
+      # tersimpan, jadi tidak ada data hilang -- tetapi pemiliknya tidak tahu
+      # ada calon klien yang menunggu dibalas.
+      - alert: IonowuLeadGagalDikirim
+        expr: ionowu_outbox_events{status="failed"} > 0
+        for: 5m
+        labels:
+          severity: critical
+          app: ionowu-web
+        annotations:
+          summary: "Ada notifikasi lead yang gagal permanen"
+          description: >-
+            Event outbox berhenti di status `failed` -- percobaan ulang sudah
+            habis. Lead-nya AMAN tersimpan di database, tetapi emailnya tidak
+            akan pernah terkirim tanpa tindakan. Biasanya penyebabnya
+            konfigurasi Resend, bukan gangguan sesaat.
+          runbook_url: https://github.com/endabean3/ionowu-v0.1/blob/main/docs/runbook.md#ionowuleadgagaldikirim
+
+      - alert: IonowuLeadTertahanTerlaluLama
+        expr: ionowu_outbox_oldest_unsent_age_seconds > 1800
+        for: 10m
+        labels:
+          severity: warning
+          app: ionowu-web
+        annotations:
+          summary: "Notifikasi lead tertahan lebih dari 30 menit"
+          description: >-
+            Ada event outbox yang belum terkirim lebih dari 30 menit. Biasanya
+            berarti worker cron berhenti dipanggil, atau Resend menolak dan
+            event sedang menunggu percobaan ulang.
+          runbook_url: https://github.com/endabean3/ionowu-v0.1/blob/main/docs/runbook.md#ionowuleadtertahanterlalulama
+
+      - alert: IonowuMetrikAplikasiHilang
+        # Kalau endpoint metrik sendiri mati, kedua alert di atas ikut bisu.
+        # Alert ini yang menjaga agar kebisuan itu tetap terdengar.
+        expr: up{job="ionowu-web"} == 0
+        for: 10m
+        labels:
+          severity: warning
+          app: ionowu-web
+        annotations:
+          summary: "Metrik aplikasi tidak bisa diambil"
+          description: >-
+            Prometheus gagal scrape /api/metrics. Selama ini berlangsung,
+            alert soal notifikasi lead tidak bisa menyala sama sekali.
+          runbook_url: https://github.com/endabean3/ionowu-v0.1/blob/main/docs/runbook.md#ionowumetrikaplikasihilang
+
       - alert: IonowuWebSertifikatSegeraKedaluwarsa
         expr: (probe_ssl_earliest_cert_expiry{job="blackbox", instance=~".*ionowu.com.*"} - time()) / 86400 < 14
         for: 1h

@@ -32,7 +32,7 @@ const TRUSTED_IP_HEADERS = new Set([
 ]);
 
 function rateLimitSecret() {
-  const secret = process.env.RATE_LIMIT_SECRET ?? process.env.CRON_SECRET;
+  const secret = process.env.RATE_LIMIT_SECRET || process.env.CRON_SECRET;
   if (!secret) throw new Error("rate-limit-secret-missing");
   return secret;
 }

@@ -17,7 +17,7 @@ export function isAdminAuthConfigured() {
   let authOrigin: string | null = null;
   try {
     const configuredUrl =
-      process.env.AUTH_URL ??
+      process.env.AUTH_URL ||
       (process.env.NODE_ENV === "production" ? "https://ionowu.com" : null);
     authOrigin = configuredUrl
       ? new URL(configuredUrl).origin

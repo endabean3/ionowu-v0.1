@@ -21,6 +21,35 @@ export const DEFAULT_TENANT_SLUG = "ionowu";
  * (mis. dipetakan dari host atau dari klaim OIDC), bukan tersebar di puluhan
  * query.
  */
+const POLA_UUID =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 export function currentTenantId(): string {
-  return process.env.TENANT_ID ?? DEFAULT_TENANT_ID;
+  const disetel = process.env.TENANT_ID;
+
+  // Kosong berarti "pakai bawaan" -- itu keadaan normal, bukan kesalahan.
+  //
+  // `||` dipakai di sini, BUKAN `??`: variabel yang disetel tapi dibiarkan
+  // kosong (`TENANT_ID=` di Dokploy) datang sebagai string kosong, bukan
+  // `undefined`. `??` meloloskannya apa adanya, dan tenant_id kosong membuat
+  // SETIAP insert lead gagal -- persis yang terjadi di produksi pada 31
+  // Agustus 2026, dan gagalnya tidak terlihat sampai log query dibaca.
+  if (!disetel) return DEFAULT_TENANT_ID;
+
+  // Nilai yang ada tapi bukan UUID akan ditolak Postgres di setiap query,
+  // bukan cuma satu. Lebih baik jatuh ke tenant bawaan dan berisik di log
+  // daripada membuat seluruh penyimpanan lead berhenti tanpa penjelasan.
+  if (!POLA_UUID.test(disetel)) {
+    console.error(
+      JSON.stringify({
+        level: "error",
+        event: "tenant.id_tidak_valid",
+        detail:
+          "TENANT_ID bukan UUID yang sah; memakai tenant bawaan. Perbaiki nilainya di secret manager.",
+      }),
+    );
+    return DEFAULT_TENANT_ID;
+  }
+
+  return disetel;
 }

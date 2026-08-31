@@ -42,7 +42,36 @@ import { errorFields, log } from "@/lib/observability/log";
      aktif; IP hanya dipakai dari header proxy yang dipercaya secara eksplisit.
    ============================================================ */
 
-const ALAMAT_TUJUAN = EMAIL_KONTAK;
+/**
+ * Ke mana notifikasi lead dikirim.
+ *
+ * Bawaannya io@ionowu.com -- alamat resmi yang juga tampil di situs. Tetapi
+ * selama domain ionowu.com belum terverifikasi di Resend, alamat pengirim
+ * sandbox hanya boleh mengirim ke email pendaftar akun Resend, sehingga
+ * kiriman ke io@ionowu.com ditolak permanen dan pemilik tidak pernah tahu ada
+ * lead masuk.
+ *
+ * CONTACT_NOTIFY_EMAIL memisahkan "alamat kontak yang dipublikasikan" dari
+ * "ke mana pemberitahuan dikirim". Keduanya memang biasanya sama, tetapi
+ * menyatukannya berarti tidak ada jalan keluar saat penyedia email membatasi
+ * salah satunya -- dan tidak menerima pemberitahuan sama sekali jauh lebih
+ * merugikan daripada menerimanya di kotak masuk sementara.
+ *
+ * Nilainya diisi lewat variabel lingkungan, TIDAK ditulis di repo: alamat
+ * penampung sementara itu email pribadi, dan email pribadi tidak boleh jadi
+ * bagian dari kode sumber perusahaan.
+ */
+const ALAMAT_TUJUAN = process.env.CONTACT_NOTIFY_EMAIL || EMAIL_KONTAK;
+
+if (
+  process.env.NODE_ENV === "production" &&
+  ALAMAT_TUJUAN !== EMAIL_KONTAK
+) {
+  log.warn("kontak.tujuan_sementara_dialihkan", {
+    detail:
+      "CONTACT_NOTIFY_EMAIL sedang mengalihkan notifikasi lead ke alamat penampung. Kembalikan ke kosong begitu domain terverifikasi di Resend.",
+  });
+}
 
 /**
  * Alamat sandbox Resend HANYA bisa mengirim ke alamat email yang mendaftarkan
@@ -77,7 +106,7 @@ if (
   });
 }
 const SITE_ORIGIN = new URL(
-  process.env.NEXT_PUBLIC_SITE_URL ??
+  process.env.NEXT_PUBLIC_SITE_URL ||
     (process.env.NODE_ENV === "production"
       ? "https://ionowu.com"
       : "http://localhost:3000"),

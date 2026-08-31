@@ -14,7 +14,7 @@ import { EMAIL_KONTAK, WA_E164 } from "@/lib/data/kontak";
  */
 
 export const SITE_URL =
-  process.env.NEXT_PUBLIC_SITE_URL ??
+  process.env.NEXT_PUBLIC_SITE_URL ||
   (process.env.NODE_ENV === "production"
     ? "https://ionowu.com"
     : "http://localhost:3000");
