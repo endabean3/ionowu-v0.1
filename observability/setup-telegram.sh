@@ -52,7 +52,12 @@ fi
 echo "    Terkirim. Cek Telegram Anda."
 
 echo "==> Menulis rahasia"
-install -d -m 700 "$SECRETS"
+# Direktori ikut dimiliki UID 65534, bukan cuma berkasnya. Kontainer
+# Alertmanager berjalan sebagai pengguna itu, dan direktori 700 milik root
+# membuatnya tidak bisa MENELUSURI folder -- berkas di dalamnya jadi tak
+# terbaca walau kepemilikan berkasnya sendiri sudah benar. Ini sudah terbukti
+# menjegal Prometheus pada 31 Agustus 2026.
+install -d -m 700 -o 65534 -g 65534 "$SECRETS"
 printf '%s' "$BOT_TOKEN" > "$TOKEN_FILE"
 chmod 600 "$TOKEN_FILE"
 # UID 65534 = pengguna nonroot di dalam kontainer Alertmanager.
