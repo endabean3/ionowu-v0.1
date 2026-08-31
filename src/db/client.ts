@@ -25,12 +25,12 @@ function connectionString() {
         "Query database akan gagal sampai DATABASE_URL diisi lewat secret manager / .env.local.",
     });
   }
-  return process.env.DATABASE_URL ?? "postgres://missing:missing@127.0.0.1:5432/missing";
+  return process.env.DATABASE_URL || "postgres://missing:missing@127.0.0.1:5432/missing";
 }
 
 function createSqlClient() {
   return postgres(connectionString(), {
-    max: Number(process.env.DATABASE_POOL_MAX ?? 5),
+    max: Number(process.env.DATABASE_POOL_MAX || 5),
     ssl: process.env.DATABASE_SSL === "disable" ? false : "require",
     prepare: false,
   });

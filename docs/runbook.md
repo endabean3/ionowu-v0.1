@@ -108,6 +108,81 @@ besar sedang tidak dilayani.
 3. Menaikkan batas di `compose.yaml` adalah keputusan sadar, bukan refleks:
    catat alasannya di commit, karena batas itu bagian dari kepatuhan RUN-05.
 
+## IonowuLeadGagalDikirim
+
+**Arti:** ada event outbox berhenti di `failed` — percobaan ulang sudah habis.
+
+**Yang TIDAK perlu dipanikkan:** lead-nya aman. `/api/kontak` menyimpan lead,
+audit log, dan event outbox dalam satu transaksi sebelum email dicoba sama
+sekali. Yang gagal hanya pemberitahuannya.
+
+1. Lihat penyebabnya:
+
+   ```bash
+   docker exec ionowu-postgres psql -U postgres -d ionowu_web \
+     -c "select id, status, attempts, last_error_code, created_at from outbox_events where status = 'failed' order by created_at desc limit 10;"
+   ```
+
+2. Baca `last_error_code`:
+   - `resend_rejected` — Resend menolak. Hampir selalu konfigurasi: domain
+     belum terverifikasi, alamat pengirim salah, atau tujuan tidak diizinkan.
+     Uji langsung untuk melihat pesan aslinya:
+
+     ```bash
+     curl -s -X POST https://api.resend.com/emails -H "Authorization: Bearer $RESEND_API_KEY" -H "Content-Type: application/json" -d '{"from":"Ionowu <onboarding@resend.dev>","to":"io@ionowu.com","subject":"uji","html":"<p>uji</p>"}'
+     ```
+
+   - `resend_timeout` / `resend_exception` — gangguan sesaat; biasanya pulih
+     sendiri pada percobaan berikutnya.
+   - `invalid_payload` — event rusak; tidak akan membaik dengan diulang.
+
+3. **Balas lead-nya secara manual dulu**, jangan menunggu emailnya jalan:
+
+   ```bash
+   docker exec ionowu-postgres psql -U postgres -d ionowu_web \
+     -c "select name, email, company, service_type, message, created_at from leads order by created_at desc limit 5;"
+   ```
+
+4. Setelah penyebabnya diperbaiki, dorong ulang antreannya:
+
+   ```bash
+   curl -X POST https://ionowu.com/api/cron/outbox -H "Authorization: Bearer $CRON_SECRET"
+   ```
+
+## IonowuLeadTertahanTerlaluLama
+
+**Arti:** ada event belum terkirim lebih dari 30 menit.
+
+1. Paling sering: worker cron berhenti dipanggil. Picu manual dan lihat apakah
+   antreannya bergerak:
+
+   ```bash
+   curl -X POST https://ionowu.com/api/cron/outbox -H "Authorization: Bearer $CRON_SECRET"
+   ```
+
+2. Kalau setelah itu event pindah ke `sent`, berarti masalahnya di penjadwal
+   cron, bukan di aplikasi.
+3. Kalau tetap tertahan, perlakukan seperti `IonowuLeadGagalDikirim` di atas.
+
+## IonowuMetrikAplikasiHilang
+
+**Arti:** Prometheus gagal scrape `/api/metrics`.
+
+Ini alert tentang alat ukurnya sendiri. Selama menyala, dua alert lead di atas
+**tidak bisa menyala sama sekali** — perlakukan sebagai kebutaan, bukan
+gangguan kecil.
+
+1. Uji endpointnya:
+
+   ```bash
+   curl -s -o /dev/null -w "%{http_code}\n" https://ionowu.com/api/metrics -H "Authorization: Bearer $(cat /opt/ionowu-monitoring/secrets/metrics-token)"
+   ```
+
+2. `401` berarti token di `/opt/ionowu-monitoring/secrets/metrics-token` tidak
+   lagi cocok dengan `METRICS_TOKEN` di Dokploy. Samakan keduanya.
+3. `503` berarti aplikasi tidak bisa membaca database — periksa
+   `/health/ready`.
+
 ## IonowuWebSertifikatSegeraKedaluwarsa
 
 **Arti:** sertifikat TLS tersisa kurang dari 14 hari.

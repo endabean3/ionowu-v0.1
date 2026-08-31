@@ -28,6 +28,25 @@ scrape_configs:
     static_configs:
       - targets: ["127.0.0.1:9090"]
 
+  # Metrik aplikasi: antrean outbox notifikasi lead.
+  #
+  # Discrape lewat HTTPS publik, BUKAN langsung ke kontainer. Alasannya:
+  # Prometheus duduk di jaringan `ionowu-monitoring` sendiri, dan memasukkannya
+  # ke `dokploy-network` hanya demi scrape berarti memperlebar jangkauan
+  # jaringannya tanpa perlu. Metrik ini berasal dari database, jadi nilainya
+  # sama dari replika mana pun -- tidak ada yang hilang karena melewati Traefik.
+  #
+  # Token dibaca dari berkas supaya tidak pernah tertulis di repo. Berkasnya
+  # dibuat di server, sama seperti bot token Telegram.
+  - job_name: ionowu-web
+    metrics_path: /api/metrics
+    scheme: https
+    authorization:
+      type: Bearer
+      credentials_file: /etc/prometheus/conf/secrets/metrics-token
+    static_configs:
+      - targets: ["ionowu.com"]
+
   # Metrik per kontainer dari host. Dipakai dua aturan alert yang menyaring
   # dengan `name=~"ionowu-web-.*"`.
   - job_name: alertmanager
