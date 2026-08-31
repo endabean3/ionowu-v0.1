@@ -43,7 +43,39 @@ import { errorFields, log } from "@/lib/observability/log";
    ============================================================ */
 
 const ALAMAT_TUJUAN = EMAIL_KONTAK;
-const ALAMAT_DARI = "Ionowu <onboarding@resend.dev>"; // TODO: ganti ke @ionowu.com setelah domain terverifikasi di Resend
+
+/**
+ * Alamat sandbox Resend HANYA bisa mengirim ke alamat email yang mendaftarkan
+ * akun Resend itu sendiri -- bukan ke io@ionowu.com. Ini bukan dugaan: diuji
+ * langsung ke API Resend (30 Agustus 2026) dan balasannya persis menyatakan
+ * itu (`validation_error`, "You can only send testing emails to your own
+ * email address"). Selama domain ionowu.com belum diverifikasi di Resend
+ * (resend.com/domains -> Tambah Domain -> pasang catatan DNS di penyedia DNS
+ * ionowu.com -> tunggu terverifikasi), SETIAP notifikasi lead akan gagal
+ * permanen -- lead-nya tetap aman tersimpan (lihat createLeadIntake), tapi
+ * emailnya tidak pernah sampai, walau outbox mengulang sampai 5 kali.
+ *
+ * RESEND_FROM_EMAIL dibaca supaya begitu domain terverifikasi, alamat
+ * pengirim cukup diganti lewat variabel lingkungan di Dokploy -- tidak perlu
+ * ubah kode dan redeploy untuk perbaikan yang sifatnya konfigurasi murni.
+ */
+// `|| ` sengaja dipakai, BUKAN `??`: variabel lingkungan yang disetel tapi
+// dibiarkan kosong (`RESEND_FROM_EMAIL=`) datang sebagai string kosong, bukan
+// `undefined` -- `??` akan meloloskannya apa adanya dan membuat `from` kirim
+// ke Resend jadi string kosong (ditolak Resend, atau lebih buruk lagi kalau
+// suatu saat Resend menerimanya begitu saja).
+const ALAMAT_DARI =
+  process.env.RESEND_FROM_EMAIL || "Ionowu <onboarding@resend.dev>";
+
+if (
+  process.env.NODE_ENV === "production" &&
+  ALAMAT_DARI.includes("onboarding@resend.dev")
+) {
+  log.warn("kontak.pengirim_masih_sandbox", {
+    detail:
+      "RESEND_FROM_EMAIL belum diisi domain terverifikasi -- notifikasi lead akan gagal permanen sampai ini diperbaiki.",
+  });
+}
 const SITE_ORIGIN = new URL(
   process.env.NEXT_PUBLIC_SITE_URL ??
     (process.env.NODE_ENV === "production"

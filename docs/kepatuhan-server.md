@@ -123,6 +123,19 @@ Tiga butir di atas berstatus **Belum**, plus satu catatan operasional:
    trace produksi menyebut dirinya "main". Saat insiden, tidak ada cara tahu
    build mana yang sedang berjalan — padahal itu justru yang dibutuhkan untuk
    memutuskan rollback. Sebaiknya diisi commit sha atau digest.
+6. **Notifikasi lead gagal permanen (ditemukan 30 Agustus 2026).** Diuji
+   langsung ke API Resend dari server: alamat pengirim sandbox
+   (`onboarding@resend.dev`) menolak mengirim ke `io@ionowu.com` dengan
+   `403 validation_error` — sandbox HANYA boleh mengirim ke alamat yang
+   mendaftarkan akun Resend. `dig` mengonfirmasi domain `ionowu.com` memang
+   belum pernah diverifikasi di Resend (tidak ada catatan `resend._domainkey`,
+   MX dan SPF-nya masih Hostinger). **Lead tetap aman tersimpan** — yang gagal
+   cuma notifikasi emailnya, dan gagalnya permanen, bukan sekadar lambat.
+   Kode sudah diperbaiki supaya alamat pengirim bisa diganti lewat
+   `RESEND_FROM_EMAIL` tanpa redeploy, tetapi perbaikan sesungguhnya —
+   verifikasi domain di resend.com/domains dan memasang catatan DNS yang
+   diberikan — hanya bisa dilakukan pemilik akun Resend dan akun DNS
+   `ionowu.com`; keduanya di luar jangkauan saya.
 
 ## Yang saya butuhkan dari sisi Anda
 

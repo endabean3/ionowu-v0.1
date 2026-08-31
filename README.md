@@ -99,9 +99,16 @@ Catatan formulir kontak:
   transaksi; tidak ada lagi jalur sukses yang melewati database
 - event email yang baru dibuat langsung diproses dari outbox sebelum API
   mengembalikan sukses; worker cron menangani retry yang tertunda
-- alamat pengirim saat ini masih `onboarding@resend.dev`
-- setelah domain Ionowu diverifikasi di Resend, ganti alamat pengirim ke domain
-  sendiri di `src/app/api/kontak/route.ts`
+- alamat pengirim saat ini masih sandbox Resend (`onboarding@resend.dev`) --
+  **notifikasi lead gagal permanen** untuk penerima mana pun selain akun
+  Resend yang mendaftar, diuji langsung ke API Resend dan dikonfirmasi
+  (`validation_error`, 403). Lead-nya sendiri tetap aman tersimpan.
+- perbaikannya: verifikasi domain `ionowu.com` di resend.com/domains (pasang
+  catatan DNS yang diberikan Resend), lalu isi `RESEND_FROM_EMAIL` di Dokploy
+  dengan alamat di domain itu -- **tidak perlu ubah kode atau redeploy**,
+  murni variabel lingkungan
+- kalau `RESEND_FROM_EMAIL` masih kosong di produksi, kontainer mencatat
+  peringatan `kontak.pengirim_masih_sandbox` di log setiap kali start
 
 Catatan admin:
 
