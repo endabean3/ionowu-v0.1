@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { Hero } from "@/components/sections/Hero";
 import { TechMarquee } from "@/components/sections/TechMarquee";
 import { Layanan } from "@/components/sections/Layanan";
+import { ProdukKami } from "@/components/sections/ProdukKami";
 import { CaraKerja } from "@/components/sections/CaraKerja";
 import { KaryaPilihan } from "@/components/sections/KaryaPilihan";
 import { Perawatan } from "@/components/sections/Perawatan";
@@ -54,6 +55,7 @@ export default async function LocalizedHome({
       <Hero locale={locale as Locale} />
       <TechMarquee />
       <Layanan locale={locale as Locale} />
+      <ProdukKami locale={locale as Locale} />
       <CaraKerja locale={locale as Locale} />
       <KaryaPilihan locale={locale as Locale} />
       <Perawatan locale={locale as Locale} />
