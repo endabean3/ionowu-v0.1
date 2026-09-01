@@ -40,8 +40,8 @@ export default function Beranda() {
       <Hero locale="id" />
       <TechMarquee />
       <Layanan locale="id" />
-      <ProdukKami locale="id" />
       <CaraKerja locale="id" />
+      <ProdukKami locale="id" />
       <KaryaPilihan locale="id" />
       <Perawatan locale="id" />
       <AjakanPenutup locale="id" />

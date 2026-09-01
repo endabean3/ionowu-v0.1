@@ -11,15 +11,21 @@ import { copy, type Locale } from "@/lib/i18n";
  * klien, nama klien dirahasiakan) dan Layanan (jasa yang dijual). Di sini
  * nama produknya boleh disebut apa adanya karena memang milik sendiri.
  *
- * JalinTani ditautkan langsung (statusnya "live", diuji hidup 1 September
- * 2026). Warung Wangi SENGAJA tidak diberi tombol kunjungi -- statusnya
- * "dibangun", belum go-live menurut README-nya sendiri (alamat, nomor
- * WhatsApp, dan katalog masih placeholder). Menautkan ke sesuatu yang belum
- * ada isinya lebih buruk daripada tidak menautkan sama sekali.
+ * Tiga status, sengaja tidak disamakan:
+ * - "live": JalinTani, ditautkan langsung -- diuji hidup 1 September 2026.
+ * - "dibangun": Warung Wangi, TANPA tombol kunjungi -- Fase 1 selesai
+ *   menurut README-nya sendiri, tapi belum go-live (alamat, nomor WhatsApp,
+ *   katalog masih placeholder).
+ * - "pengembangan": ionowu sweet, TANPA tombol kunjungi -- roadmap-nya
+ *   sendiri masih di Fase 0 (fondasi), belum ada toko percontohan. Diberi
+ *   status terpisah dari "dibangun" supaya tidak menyiratkan progres yang
+ *   setara Warung Wangi padahal jaraknya masih jauh.
  *
- * Layout kartu tunggal lebar dengan badge status, bukan grid tiga kolom
- * seperti KaryaPilihan -- dua produk saja terasa kosong kalau dipaksakan
- * jadi grid tiga kolom.
+ * Menautkan ke sesuatu yang belum ada isinya lebih buruk daripada tidak
+ * menautkan sama sekali -- jadi hanya status "live" yang pernah dapat href.
+ *
+ * Layout kartu tunggal lebar dengan badge status, bukan grid kolom seperti
+ * KaryaPilihan -- produk sedikit terasa kosong kalau dipaksakan jadi grid.
  */
 export function ProdukKami({ locale = "id" }: { locale?: Locale }) {
   const c = copy[locale];
@@ -45,16 +51,22 @@ export function ProdukKami({ locale = "id" }: { locale?: Locale }) {
                         "inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-small " +
                         (p.status === "live"
                           ? "border-accent-deep/40 text-accent"
-                          : "border-line text-ink-muted")
+                          : p.status === "dibangun"
+                            ? "border-line text-ink-muted"
+                            : "border-dashed border-line text-ink-muted")
                       }
                     >
                       <Circle
                         size={7}
-                        weight="fill"
+                        weight={p.status === "pengembangan" ? "regular" : "fill"}
                         aria-hidden
                         className={p.status === "live" ? "text-accent" : "text-ink-muted"}
                       />
-                      {p.status === "live" ? c.home.productsLive : c.home.productsBuilding}
+                      {p.status === "live"
+                        ? c.home.productsLive
+                        : p.status === "dibangun"
+                          ? c.home.productsBuilding
+                          : c.home.productsDeveloping}
                     </span>
                   </div>
                   <p className="mt-2 text-small text-ink-muted">{p.wilayah}</p>

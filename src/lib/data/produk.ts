@@ -17,9 +17,19 @@ import type { Locale } from "@/lib/i18n";
  *   nomor WhatsApp asli, dan katalog asli (tiga-tiganya masih placeholder
  *   di kode). Karena itu TIDAK diberi tautan publik di sini -- menautkan
  *   ke sesuatu yang belum ada isinya lebih buruk daripada tidak menautkan.
+ * - ionowu sweet (UMKM Intelligence & POS Ecosystem): dibaca dari
+ *   00-product/ROADMAP.md dan riwayat commit di repo terpisah, BUKAN dari
+ *   situs publik -- domain rencananya (api.ionowu.com, app.ionowu.com) diuji
+ *   dan gagal resolve DNS sama sekali, belum terdaftar. Statusnya jauh di
+ *   belakang Warung Wangi: roadmap-nya sendiri masih di "Fase 0 -- Fondasi
+ *   Bisa Berjualan (MVP)", dan commit terakhir berbunyi "fondasi backend Go
+ *   + skeleton PWA offline-first" -- kata kuncinya fondasi dan skeleton,
+ *   belum toko percontohan. Karena itu diberi status ketiga, "pengembangan",
+ *   bukan disamakan dengan "dibangun" -- menyamakan keduanya akan melebih-
+ *   lebihkan progres yang sebenarnya masih tahap awal.
  */
 
-export type StatusProduk = "live" | "dibangun";
+export type StatusProduk = "live" | "dibangun" | "pengembangan";
 
 export type Produk = {
   slug: string;
@@ -36,6 +46,17 @@ export type Produk = {
 type ProdukCopy = Pick<Produk, "tagline" | "ringkasan">;
 
 export const DAFTAR_PRODUK: Produk[] = [
+  {
+    slug: "ionowu-sweet",
+    nama: "ionowu sweet",
+    tagline:
+      "Kasir modern, CRM, dan Business Intelligence untuk UMKM -- satu ekosistem.",
+    ringkasan:
+      "Toko kecil sering mencatat penjualan di kertas atau aplikasi kasir yang tidak menyimpan data pelanggan maupun tren penjualan. ionowu sweet dibangun sebagai kasir yang tetap bisa dipakai offline, ditambah CRM dan business intelligence di atasnya -- masih di fondasi paling awal (Fase 0), belum diuji di toko sungguhan.",
+    status: "pengembangan",
+    wilayah: "Belum ada toko percontohan",
+    teknologi: ["Go", "Next.js", "PWA", "PostgreSQL", "Redis"],
+  },
   {
     slug: "jalintani",
     nama: "JalinTani",
@@ -62,6 +83,11 @@ export const DAFTAR_PRODUK: Produk[] = [
 
 const COPY: Record<Exclude<Locale, "id">, Record<string, ProdukCopy>> = {
   en: {
+    "ionowu-sweet": {
+      tagline: "Modern POS, CRM, and Business Intelligence for small shops -- one ecosystem.",
+      ringkasan:
+        "Small shops often record sales on paper or in POS apps that keep no customer data or sales trends. ionowu sweet is built as a cashier system that still works offline, with CRM and business intelligence on top -- still at the earliest foundation stage (Phase 0), not yet tested in a real store.",
+    },
     jalintani: {
       tagline:
         "A vegetable marketplace connecting farmers, sellers, and buyers in one app.",
@@ -75,6 +101,11 @@ const COPY: Record<Exclude<Locale, "id">, Record<string, ProdukCopy>> = {
     },
   },
   zh: {
+    "ionowu-sweet": {
+      tagline: "面向小微商户的现代收银、CRM 与商业智能——一个生态系统。",
+      ringkasan:
+        "小商户常用纸笔或不保存客户数据与销售趋势的收银软件记账。ionowu sweet 打造成一套离线也能使用的收银系统，并在此之上叠加 CRM 与商业智能——目前仍处于最早期的基础阶段（第 0 阶段），尚未在真实门店中试用。",
+    },
     jalintani: {
       tagline: "连接农民、商贩与买家的蔬菜交易平台，一个应用搞定。",
       ringkasan:

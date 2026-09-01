@@ -127,6 +127,7 @@ export const copy = {
         "Bukan cuma untuk klien -- ini yang kami bangun dan jalankan sendiri, bisa dicoba langsung.",
       productsLive: "Aktif",
       productsBuilding: "Sedang disiapkan",
+      productsDeveloping: "Dalam pengembangan",
       productsVisit: "Kunjungi",
     },
     process: [
@@ -259,6 +260,7 @@ export const copy = {
         "Not just for clients -- these are ours, running live, and you can try them.",
       productsLive: "Live",
       productsBuilding: "In preparation",
+      productsDeveloping: "In development",
       productsVisit: "Visit",
     },
     process: [
@@ -389,6 +391,7 @@ export const copy = {
       productsLead: "不只是为客户打造——这些是我们自己开发并运营的产品，欢迎实际体验。",
       productsLive: "已上线",
       productsBuilding: "筹备中",
+      productsDeveloping: "开发中",
       productsVisit: "访问",
     },
     process: [
