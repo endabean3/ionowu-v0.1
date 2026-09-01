@@ -115,11 +115,10 @@ Tiga butir di atas berstatus **Belum**, plus satu catatan operasional:
    dikorbankan, atau rollout dijalankan bertahap secara manual. Ini keputusan
    arsitektur, bukan sesuatu yang bisa diperbaiki dengan menambah opsi di
    `compose.yaml`.
-5. **`APP_VERSION=main` di produksi.** Image-nya sendiri sudah dideploy per
-   digest, tetapi variabel versi ikut `IMAGE_TAG`, sehingga setiap log dan
-   trace produksi menyebut dirinya "main". Saat insiden, tidak ada cara tahu
-   build mana yang sedang berjalan — padahal itu justru yang dibutuhkan untuk
-   memutuskan rollback. Sebaiknya diisi commit sha atau digest.
+5. **SELESAI (31 Agustus 2026).** `APP_VERSION` kini membaca `GIT_SHA`,
+   diisi manual tiap deploy bersamaan dengan `IMAGE_DIGEST`/`MIGRATE_DIGEST`.
+   Diverifikasi: `/health/live` dan `/health/ready` produksi menyebut commit
+   sha sungguhan, bukan lagi "main".
 6. **Formulir kontak sempat rusak total (ditemukan & diperbaiki 31 Agustus
    2026).** Setiap pengunjung yang menekan kirim menerima 503 — lead tidak
    pernah bisa tersimpan sama sekali. Dua sebab: (a) `drizzle/roles/
@@ -131,19 +130,22 @@ Tiga butir di atas berstatus **Belum**, plus satu catatan operasional:
    `/health/ready` tetap hijau sepanjang kejadian karena pemeriksaannya hanya
    `select 1`, yang tidak butuh hak tabel — probe yang lulus tidak sama dengan
    aplikasi yang berfungsi.
-7. **Notifikasi lead gagal permanen (ditemukan 30 Agustus 2026).** Diuji
-   langsung ke API Resend dari server: alamat pengirim sandbox
-   (`onboarding@resend.dev`) menolak mengirim ke `io@ionowu.com` dengan
-   `403 validation_error` — sandbox HANYA boleh mengirim ke alamat yang
-   mendaftarkan akun Resend. `dig` mengonfirmasi domain `ionowu.com` memang
-   belum pernah diverifikasi di Resend (tidak ada catatan `resend._domainkey`,
-   MX dan SPF-nya masih Hostinger). **Lead tetap aman tersimpan** — yang gagal
-   cuma notifikasi emailnya, dan gagalnya permanen, bukan sekadar lambat.
-   Kode sudah diperbaiki supaya alamat pengirim bisa diganti lewat
-   `RESEND_FROM_EMAIL` tanpa redeploy, tetapi perbaikan sesungguhnya —
-   verifikasi domain di resend.com/domains dan memasang catatan DNS yang
-   diberikan — hanya bisa dilakukan pemilik akun Resend dan akun DNS
-   `ionowu.com`; keduanya di luar jangkauan saya.
+7. **Notifikasi lead gagal permanen (ditemukan 30 Agustus, DITUTUP 1
+   September 2026).** Akar masalahnya bukan cuma domain belum terverifikasi
+   -- setelah domain terverifikasi di dashboard Resend, pengiriman TETAP
+   ditolak `403`. Penyebab sesungguhnya: verifikasi domain terikat ke akun
+   Resend, dan API key yang terpasang di server ternyata terdaftar ke akun
+   yang BERBEDA dari akun tempat domain diverifikasi.
+
+   Ditutup dengan mengganti `RESEND_API_KEY` ke kunci dari akun yang benar
+   (diverifikasi read-only lebih dulu lewat `GET /domains` sebelum dipasang:
+   `ionowu.com` -> `status: verified`, `sending: enabled`), mengisi
+   `RESEND_FROM_EMAIL="Ionowu <io@ionowu.com>"`, dan mengosongkan
+   `CONTACT_NOTIFY_EMAIL` karena penampung sementara tidak diperlukan lagi.
+
+   **Diuji ujung-ke-ujung lewat formulir kontak sungguhan**: `POST
+   /api/kontak` -> `{"ok":true}` -> outbox `status: sent` -> email diterima
+   di `io@ionowu.com`. Data uji dibersihkan setelahnya.
 
 ## Yang saya butuhkan dari sisi Anda
 
