@@ -122,6 +122,12 @@ export const copy = {
       maintenanceTitle: "Sistem yang sudah jalan, tetap kami dampingi",
       maintenanceLead:
         "Pekerjaan kami tidak berhenti di serah terima. Sistem yang kami bangun tetap kami rawat, supaya tetap hidup saat Anda paling membutuhkannya.",
+      productsTitle: "Produk kami sendiri",
+      productsLead:
+        "Bukan cuma untuk klien -- ini yang kami bangun dan jalankan sendiri, bisa dicoba langsung.",
+      productsLive: "Aktif",
+      productsBuilding: "Sedang disiapkan",
+      productsVisit: "Kunjungi",
     },
     process: [
       ["Dengar", "Kami pelajari masalah dan alur kerja yang sudah berjalan."],
@@ -248,6 +254,12 @@ export const copy = {
       maintenanceTitle: "Systems already running, still in our hands",
       maintenanceLead:
         "Our work does not end at handover. What we build, we keep maintaining, so it stays up when you need it most.",
+      productsTitle: "Products we build ourselves",
+      productsLead:
+        "Not just for clients -- these are ours, running live, and you can try them.",
+      productsLive: "Live",
+      productsBuilding: "In preparation",
+      productsVisit: "Visit",
     },
     process: [
       ["Listen", "We study the problem and the workflow already in place."],
@@ -373,6 +385,11 @@ export const copy = {
       maintenanceTitle: "已上线的系统，我们持续维护",
       maintenanceLead:
         "我们的工作不会止于交付。已经构建的系统，我们会持续维护，让它在最需要的时候保持运作。",
+      productsTitle: "我们自己的产品",
+      productsLead: "不只是为客户打造——这些是我们自己开发并运营的产品，欢迎实际体验。",
+      productsLive: "已上线",
+      productsBuilding: "筹备中",
+      productsVisit: "访问",
     },
     process: [
       ["倾听", "我们先了解问题和现有工作流程。"],

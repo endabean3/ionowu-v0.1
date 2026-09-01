@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Hero } from "@/components/sections/Hero";
 import { TechMarquee } from "@/components/sections/TechMarquee";
 import { Layanan } from "@/components/sections/Layanan";
+import { ProdukKami } from "@/components/sections/ProdukKami";
 import { CaraKerja } from "@/components/sections/CaraKerja";
 import { KaryaPilihan } from "@/components/sections/KaryaPilihan";
 import { Perawatan } from "@/components/sections/Perawatan";
@@ -39,6 +40,7 @@ export default function Beranda() {
       <Hero locale="id" />
       <TechMarquee />
       <Layanan locale="id" />
+      <ProdukKami locale="id" />
       <CaraKerja locale="id" />
       <KaryaPilihan locale="id" />
       <Perawatan locale="id" />
