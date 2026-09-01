@@ -5,6 +5,7 @@ import { TechMarquee } from "@/components/sections/TechMarquee";
 import { Layanan } from "@/components/sections/Layanan";
 import { CaraKerja } from "@/components/sections/CaraKerja";
 import { KaryaPilihan } from "@/components/sections/KaryaPilihan";
+import { Perawatan } from "@/components/sections/Perawatan";
 import { AjakanPenutup } from "@/components/sections/AjakanPenutup";
 import {
   LOCALES,
@@ -55,6 +56,7 @@ export default async function LocalizedHome({
       <Layanan locale={locale as Locale} />
       <CaraKerja locale={locale as Locale} />
       <KaryaPilihan locale={locale as Locale} />
+      <Perawatan locale={locale as Locale} />
       <AjakanPenutup locale={locale as Locale} />
     </main>
   );

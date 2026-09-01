@@ -4,6 +4,7 @@ import { TechMarquee } from "@/components/sections/TechMarquee";
 import { Layanan } from "@/components/sections/Layanan";
 import { CaraKerja } from "@/components/sections/CaraKerja";
 import { KaryaPilihan } from "@/components/sections/KaryaPilihan";
+import { Perawatan } from "@/components/sections/Perawatan";
 import { AjakanPenutup } from "@/components/sections/AjakanPenutup";
 import { copy, localizedAlternates } from "@/lib/i18n";
 
@@ -40,6 +41,7 @@ export default function Beranda() {
       <Layanan locale="id" />
       <CaraKerja locale="id" />
       <KaryaPilihan locale="id" />
+      <Perawatan locale="id" />
       <AjakanPenutup locale="id" />
     </main>
   );
