@@ -119,6 +119,9 @@ export const copy = {
       workLead: "Contoh proyek nyata, ditulis jujur tanpa klaim kosong.",
       finalTitle: "Punya sistem yang mulai terasa berat?",
       finalLead: "Ceritakan kebutuhannya. Konsultasi awal gratis dan tanpa ikatan.",
+      maintenanceTitle: "Sistem yang sudah jalan, tetap kami dampingi",
+      maintenanceLead:
+        "Pekerjaan kami tidak berhenti di serah terima. Sistem yang kami bangun tetap kami rawat, supaya tetap hidup saat Anda paling membutuhkannya.",
     },
     process: [
       ["Dengar", "Kami pelajari masalah dan alur kerja yang sudah berjalan."],
@@ -242,6 +245,9 @@ export const copy = {
       workLead: "Real project examples, written plainly without inflated claims.",
       finalTitle: "Is your system starting to feel heavy?",
       finalLead: "Tell us what you need. The first consultation is free.",
+      maintenanceTitle: "Systems already running, still in our hands",
+      maintenanceLead:
+        "Our work does not end at handover. What we build, we keep maintaining, so it stays up when you need it most.",
     },
     process: [
       ["Listen", "We study the problem and the workflow already in place."],
@@ -364,6 +370,9 @@ export const copy = {
       workLead: "真实项目示例，表达清楚，不夸大。",
       finalTitle: "您的系统是否开始变得沉重？",
       finalLead: "告诉我们您的需求。首次咨询免费。",
+      maintenanceTitle: "已上线的系统，我们持续维护",
+      maintenanceLead:
+        "我们的工作不会止于交付。已经构建的系统，我们会持续维护，让它在最需要的时候保持运作。",
     },
     process: [
       ["倾听", "我们先了解问题和现有工作流程。"],
