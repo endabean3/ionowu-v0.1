@@ -128,6 +128,24 @@ groups:
             alert soal notifikasi lead tidak bisa menyala sama sekali.
           runbook_url: https://github.com/endabean3/ionowu-v0.1/blob/main/docs/runbook.md#ionowumetrikaplikasihilang
 
+      - alert: IonowuTracePenampungMati
+        # Jaeger mati tidak membuat situs ikut mati -- aplikasi tetap melayani
+        # walau ekspor trace gagal. Karena itu severity `warning`, bukan
+        # critical. Tapi tetap perlu diketahui: selama ini berlangsung, tidak
+        # ada trace baru yang tersimpan, dan justru saat insiden berikutnya
+        # trace itulah yang akan dicari.
+        expr: up{job="jaeger"} == 0
+        for: 10m
+        labels:
+          severity: warning
+          app: ionowu-web
+        annotations:
+          summary: "Penampung trace (Jaeger) tidak bisa dihubungi"
+          description: >-
+            Prometheus gagal scrape Jaeger. Trace yang dikirim aplikasi
+            kemungkinan tidak tersimpan. Situs sendiri tidak terdampak.
+          runbook_url: https://github.com/endabean3/ionowu-v0.1/blob/main/docs/runbook.md#ionowutracepenampungmati
+
       - alert: IonowuWebSertifikatSegeraKedaluwarsa
         expr: (probe_ssl_earliest_cert_expiry{job="blackbox", instance=~".*ionowu.com.*"} - time()) / 86400 < 14
         for: 1h

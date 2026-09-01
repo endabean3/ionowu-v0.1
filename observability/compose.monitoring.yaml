@@ -2,18 +2,23 @@
 # Ionowu — stack pemantauan `ionowu-monitoring`
 #
 # Menutup OBS-05: sebelum ini tidak ada satu pun yang memberi tahu kalau situs
-# mati. Isinya sengaja minimal — Prometheus dan blackbox_exporter — supaya
-# alert paling penting bisa menyala hari ini, bukan nanti setelah stack besar
-# selesai dirancang.
+# mati, dan supaya trace bisa ditelusuri saat ada yang lambat.
 #
 # Kepatuhan: IMG-02 (digest terkunci), RUN-01 (nonroot), RUN-05 (batas sumber
-# daya), RUN-16 (log driver local), ISO-06 (tidak menyentuh dokploy-network,
-# jadi tidak ada route publik sama sekali).
+# daya), RUN-16 (log driver local), ISO-06 (tidak ada satu pun layanan di
+# sini yang punya route publik).
+#
+# Catatan ISO-06: Jaeger BERGABUNG ke dokploy-network, tetapi tidak punya
+# label Traefik. Ia perlu satu jaringan dengan aplikasi supaya bisa MENERIMA
+# trace -- itu tidak sama dengan terekspos ke internet. Layanan lain di stack
+# ini tetap terkurung di jaringan `ionowu-monitoring` saja.
 #
 # Akses UI: TIDAK diekspos ke internet. Port hanya diikat ke 127.0.0.1, jadi
 # dijangkau lewat SSH tunnel:
-#   ssh -N -L 9090:127.0.0.1:9090 -L 9093:127.0.0.1:9093 root@76.13.16.85
-# lalu buka http://localhost:9090 (Prometheus) atau :9093 (Alertmanager)
+#   ssh -N -L 9090:127.0.0.1:9090 -L 9093:127.0.0.1:9093 \
+#          -L 16686:127.0.0.1:16686 root@76.13.16.85
+# lalu buka http://localhost:9090 (Prometheus), :9093 (Alertmanager),
+# atau :16686 (Jaeger, penelusuran trace)
 #
 # RAHASIA: bot token Telegram TIDAK ada di repo. Ia dibaca dari berkas
 # ./secrets/telegram-bot-token di server, yang dibuat pemiliknya sendiri.
@@ -202,11 +207,79 @@ services:
         reservations:
           memory: 64M
 
+  # --- Jaeger: penampung trace OpenTelemetry (OBS-01) -----------------------
+  # Sebelum ini OTEL_EXPORTER_OTLP_ENDPOINT kosong: trace_id terbentuk di
+  # setiap log, tapi span-nya tidak dikirim ke mana pun. Artinya kalau ada
+  # permintaan lambat, trace_id di log tidak bisa ditukar jadi jawaban
+  # "lambatnya di bagian mana" -- yang justru gunanya trace.
+  #
+  # Jaeger dipilih di antara Tempo dan SigNoz karena host ini cuma 2 CPU:
+  # SigNoz menuntut ClickHouse, Tempo menuntut Grafana plus object storage.
+  # Jaeger satu kontainer 106 MB, UI sendiri, OTLP native, CNCF graduated.
+  jaeger:
+    <<: *defaults
+    image: jaegertracing/jaeger:2.20.0@sha256:46a886260e04002d8f45e213fc39063fa11a50446048fdaa64786fc0840cb9f8
+    container_name: ionowu-jaeger
+    # Image ini sudah nonroot bawaan (UID 10001).
+    user: "10001:10001"
+    command:
+      - --config=file:/etc/jaeger/conf/jaeger.yaml
+    # Volume Docker BARU selalu dimiliki root, dan kontainer ini nonroot
+    # (UID 10001) -- persis kelas masalah yang sudah dua kali menjegal
+    # Prometheus dan Alertmanager di stack ini. Kalau volume `jaeger-data`
+    # pernah dibuat ulang (host baru, `docker volume rm`, dst.), jalankan
+    # SEKALI sebelum `up`:
+    #   docker run --rm -v ionowu-monitoring-jaegerdata:/badger alpine \
+    #     chown -R 10001:10001 /badger
+    volumes:
+      # Direktori, bukan berkas satuan -- alasannya sama seperti di Prometheus.
+      - ./:/etc/jaeger/conf:ro
+      - jaeger-data:/badger
+    tmpfs:
+      - /tmp:size=64m,mode=1777
+    ports:
+      # UI diikat ke loopback saja, dijangkau lewat SSH tunnel.
+      - "127.0.0.1:16686:16686"
+    networks:
+      - monitoring
+      # Aplikasi hidup di dokploy-network. Jaeger MENERIMA kiriman dari sana,
+      # jadi harus satu jaringan dengannya -- tidak bisa lewat HTTPS publik
+      # seperti scrape Prometheus tanpa membuka Jaeger ke internet.
+      # Tidak ada label Traefik, jadi tetap tidak punya route publik.
+      - dokploy-network
+    healthcheck:
+      test:
+        ["CMD", "/cmd/jaeger/jaeger-linux", "validate", "--config=file:/etc/jaeger/conf/jaeger.yaml"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+    stop_grace_period: 15s
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 512M
+        reservations:
+          memory: 128M
+
 networks:
   monitoring:
     name: ionowu-monitoring
+  # Jaringan bersama Dokploy, dibuat di luar stack ini. HANYA Jaeger yang
+  # bergabung, dan itu pun tanpa label Traefik -- ia perlu satu jaringan
+  # dengan aplikasi supaya bisa MENERIMA trace, bukan supaya bisa diakses
+  # dari internet.
+  dokploy-network:
+    external: true
 
 volumes:
+  jaeger-data:
+    name: ionowu-monitoring-jaegerdata
+    labels:
+      # Trace berumur 7 hari dan bisa hilang tanpa kehilangan data bisnis.
+      ionowu.backup: "false"
+      ionowu.app: ionowu-monitoring
   alertmanager-data:
     name: ionowu-monitoring-alertmanager
     labels:

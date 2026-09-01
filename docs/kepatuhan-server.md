@@ -73,7 +73,7 @@ Arti kolom status:
 
 | # | Butir | Status | Catatan |
 | --- | --- | --- | --- |
-| 28 | OpenTelemetry terpasang (OBS-01) | **Belum** | Kodenya siap (`src/instrumentation.ts`, eksporter OTLP standar), tetapi di produksi `OTEL_EXPORTER_OTLP_ENDPOINT` **kosong** dan tidak ada satu pun kontainer kolektor di host. Artinya tidak ada trace yang benar-benar keluar dari aplikasi. Butuh kolektor OTLP dan pengisian variabel itu di Dokploy. |
+| 28 | OpenTelemetry terpasang (OBS-01) | **Selesai** | Jaeger v2.20.0 dipasang di stack `ionowu-monitoring`, dijangkau aplikasi lewat `dokploy-network`. `OTEL_EXPORTER_OTLP_ENDPOINT` default ke `http://ionowu-jaeger:4318`. **Diuji ujung-ke-ujung**: permintaan sungguhan ke `/health/ready` menghasilkan trace yang benar-benar tersimpan -- `GET /api/services` Jaeger mendaftarkan `ionowu-web`, dan `GET /api/traces` mengembalikan trace nyata (`traceID` 32-hex, sama persis formatnya dengan `trace_id` di log JSON). UI dijangkau lewat SSH tunnel `:16686`, tidak ada route publik. Jaeger dipilih di antara Tempo/SigNoz karena host 2 CPU -- satu kontainer 106 MB, bukan tumpukan ClickHouse atau Grafana+object storage. |
 | 29 | `trace_id` di setiap log (OBS-02) | Selesai | `src/lib/observability/log.ts`; seluruh `console.error` sisi server sudah diganti. Diverifikasi lokal: permintaan ke `/health/ready` menghasilkan baris log JSON berisi `trace_id` dan `span_id`. |
 | 30 | `/health/live` dan `/health/ready` (RUN-08) | Terverifikasi di produksi | `https://ionowu.com/health/live` membalas 200 tanpa menyentuh dependensi. `/health/ready` membalas 200 `ready` dengan ketiga pemeriksaan lulus (`database`, `contact_pipeline`, `admin_auth`), header `cache-control: no-store`. Healthcheck kontainer juga `exit=0`. `live` sengaja tidak memeriksa database supaya database yang mati tidak memicu restart aplikasi yang sebenarnya sehat. |
 | 31 | Dashboard dan minimal satu alert (OBS-05) | **Selesai** | Alertmanager v0.34.0 terpasang dan terhubung ke bot Telegram `@ionowu_bot`. Prometheus melaporkan 1 Alertmanager aktif dan **5/5 target `up`** (`ionowu-web`, `blackbox`, `cadvisor`, `alertmanager`, `prometheus`). **Diuji ujung-ke-ujung dengan alert sungguhan**, bukan cuma status hijau: alert uji dikirim ke Alertmanager, diterima (`200`), lalu dicabut — kabar MENYALA dan PULIH dua-duanya terkirim ke Telegram. Kedelapan alert (situs mati, lambat, restart berulang, memori mendekati batas, lead gagal terkirim, lead tertahan, metrik hilang, sertifikat kedaluwarsa) kini benar-benar sampai ke pemiliknya, bukan cuma berhenti di UI Prometheus. **Sisanya kosmetik:** dashboard Grafana masih berupa JSON, belum ada Grafana yang memuatnya — tidak mengurangi fungsi alert. |
@@ -98,9 +98,9 @@ Arti kolom status:
 
 Tiga butir di atas berstatus **Belum**, plus satu catatan operasional:
 
-1. **OBS-01 — OTel tidak mengirim ke mana pun.** `OTEL_EXPORTER_OTLP_ENDPOINT`
-   kosong dan tidak ada kolektor di host. `trace_id` tetap terbentuk di log,
-   tapi tidak ada trace yang tersimpan atau bisa ditelusuri.
+1. **SELESAI (1 September 2026).** Jaeger terpasang dan terbukti menerima
+   trace sungguhan dari produksi. Rincian dan bukti uji ada di Tahap 6 tabel
+   di atas.
 2. **OBS-05 — SELESAI (31 Agustus 2026).** Alertmanager menyala dan
    terhubung ke `@ionowu_bot`. Diuji ujung-ke-ujung dengan alert sungguhan:
    MENYALA dan PULIH dua-duanya terkirim ke Telegram. Kalimat "tidak ada yang

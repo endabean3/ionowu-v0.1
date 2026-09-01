@@ -47,6 +47,12 @@ scrape_configs:
     static_configs:
       - targets: ["ionowu.com"]
 
+  # Jaeger mengekspos metriknya sendiri di 8888 (lihat jaeger.yaml).
+  # Dipakai alert IonowuTracePenampungMati.
+  - job_name: jaeger
+    static_configs:
+      - targets: ["ionowu-jaeger:8888"]
+
   # Metrik per kontainer dari host. Dipakai dua aturan alert yang menyaring
   # dengan `name=~"ionowu-web-.*"`.
   - job_name: alertmanager
