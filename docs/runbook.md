@@ -183,6 +183,28 @@ gangguan kecil.
 3. `503` berarti aplikasi tidak bisa membaca database — periksa
    `/health/ready`.
 
+## IonowuTracePenampungMati
+
+**Arti:** Prometheus gagal scrape Jaeger selama 10 menit. Trace baru
+kemungkinan tidak tersimpan. Situs sendiri tidak terdampak -- aplikasi
+tetap melayani permintaan walau ekspor trace gagal.
+
+1. Cek kontainernya:
+
+   ```bash
+   docker ps --format '{{.Names}}\t{{.Status}}' | grep jaeger
+   docker logs --tail 50 ionowu-jaeger
+   ```
+
+2. Kalau kontainer mati, naikkan lagi:
+
+   ```bash
+   cd /opt/ionowu-monitoring && docker compose up -d jaeger
+   ```
+
+3. Kalau kontainer hidup tapi Prometheus tetap gagal scrape, periksa apakah
+   `ionowu-jaeger` masih satu jaringan `ionowu-monitoring` dengan Prometheus.
+
 ## IonowuWebSertifikatSegeraKedaluwarsa
 
 **Arti:** sertifikat TLS tersisa kurang dari 14 hari.
@@ -226,10 +248,12 @@ UI Prometheus **tidak** diekspos ke internet — port hanya diikat ke loopback.
 Menjangkaunya lewat SSH tunnel:
 
 ```bash
-ssh -N -L 9090:127.0.0.1:9090 -L 9093:127.0.0.1:9093 root@76.13.16.85
+ssh -N -L 9090:127.0.0.1:9090 -L 9093:127.0.0.1:9093 -L 16686:127.0.0.1:16686 root@76.13.16.85
 ```
 
-`http://localhost:9090` Prometheus, `http://localhost:9093` Alertmanager.
+`http://localhost:9090` Prometheus, `http://localhost:9093` Alertmanager,
+`http://localhost:16686` Jaeger (penelusuran trace per permintaan --
+cari berdasarkan `trace_id` yang sama seperti di log JSON aplikasi).
 
 Lalu buka `http://localhost:9090` — halaman **Alerts** memperlihatkan status
 kelima aturan, **Targets** memperlihatkan apakah probe masih hidup.

@@ -1,0 +1,76 @@
+# Jaeger v2 — penampung trace OpenTelemetry.
+#
+# Disusun dari contoh resmi cmd/jaeger/config-badger.yaml (Apache-2.0),
+# disesuaikan untuk host ini:
+#
+# - Archive store DIHAPUS. Contoh resminya punya dua penyimpanan (48 jam dan
+#   30 hari) yang menggandakan pemakaian disk. Untuk satu aplikasi dengan
+#   trafik rendah, satu penyimpanan sudah cukup.
+# - Retensi 7 hari, bukan 48 jam. Insiden sering baru ditelusuri beberapa
+#   hari setelah kejadian; 48 jam terlalu pendek untuk itu.
+# - Penyimpanan di /badger (volume), BUKAN /tmp. /tmp di kontainer ini adalah
+#   tmpfs -- trace akan hilang setiap restart, dan trace yang hilang persis
+#   saat penyelidikan dibutuhkan adalah kegagalan yang paling menyakitkan.
+# - Endpoint ditulis eksplisit, tidak mengandalkan bawaan, supaya jelas apa
+#   yang didengarkan di port mana.
+
+service:
+  extensions: [jaeger_storage, jaeger_query, healthcheckv2]
+  pipelines:
+    traces:
+      receivers: [otlp]
+      processors: [batch]
+      exporters: [jaeger_storage_exporter]
+  telemetry:
+    resource:
+      service.name: jaeger
+    metrics:
+      level: detailed
+      readers:
+        - pull:
+            exporter:
+              prometheus:
+                host: 0.0.0.0
+                port: 8888
+    logs:
+      level: info
+
+extensions:
+  healthcheckv2:
+    use_v2: true
+    http:
+      endpoint: 0.0.0.0:13133
+
+  jaeger_query:
+    storage:
+      traces: main_store
+    http:
+      endpoint: 0.0.0.0:16686
+    grpc:
+      endpoint: 0.0.0.0:16685
+
+  jaeger_storage:
+    backends:
+      main_store:
+        badger:
+          directories:
+            keys: /badger/keys
+            values: /badger/values
+          ephemeral: false
+          ttl:
+            spans: 168h # 7 hari
+
+receivers:
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4317
+      http:
+        endpoint: 0.0.0.0:4318
+
+processors:
+  batch:
+
+exporters:
+  jaeger_storage_exporter:
+    trace_storage: main_store

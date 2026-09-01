@@ -87,7 +87,13 @@ services:
       RATE_LIMIT_SECRET: ${RATE_LIMIT_SECRET}
       CONTACT_TRUSTED_IP_HEADER: ${CONTACT_TRUSTED_IP_HEADER:-}
       OTEL_SERVICE_NAME: ionowu-web
-      OTEL_EXPORTER_OTLP_ENDPOINT: ${OTEL_EXPORTER_OTLP_ENDPOINT:-}
+      # Default menunjuk Jaeger di stack pemantauan (observability/jaeger.yaml)
+      # lewat dokploy-network -- satu-satunya jaringan yang sama-sama disentuh
+      # aplikasi ini dan Jaeger. @vercel/otel dengan OTLP/HTTP menambahkan
+      # /v1/traces sendiri di atas base endpoint ini (spesifikasi OTLP), jadi
+      # TIDAK ditulis manual di sini. Override kalau kelak pindah ke kolektor
+      # lain (mis. layanan tracing berbayar).
+      OTEL_EXPORTER_OTLP_ENDPOINT: ${OTEL_EXPORTER_OTLP_ENDPOINT:-http://ionowu-jaeger:4318}
       OTEL_EXPORTER_OTLP_HEADERS: ${OTEL_EXPORTER_OTLP_HEADERS:-}
       LOG_LEVEL: ${LOG_LEVEL:-info}
     tmpfs:
