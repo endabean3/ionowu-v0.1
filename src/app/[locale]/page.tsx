@@ -55,8 +55,8 @@ export default async function LocalizedHome({
       <Hero locale={locale as Locale} />
       <TechMarquee />
       <Layanan locale={locale as Locale} />
-      <ProdukKami locale={locale as Locale} />
       <CaraKerja locale={locale as Locale} />
+      <ProdukKami locale={locale as Locale} />
       <KaryaPilihan locale={locale as Locale} />
       <Perawatan locale={locale as Locale} />
       <AjakanPenutup locale={locale as Locale} />
