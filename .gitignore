@@ -47,3 +47,9 @@ next-env.d.ts
 
 # Rahasia dan berkas hasil render di server — tidak pernah masuk Git.
 observability/secrets/
+
+# Skill Claude Code pihak ketiga (dipasang via `uipro init`, lihat juga
+# instalasi global di ~/.claude/skills/) — alat bantu lokal, bukan bagian
+# dari aplikasi. Tidak pernah tracked sebelumnya (diperiksa lewat
+# `git log --all -- .claude`), jadi aman diabaikan seluruhnya.
+.claude/
