@@ -3,6 +3,7 @@ import { Container, Section } from "@/components/ui/Container";
 import { Reveal, RevealGroup, RevealItem } from "@/components/motion/Reveal";
 import { BlurReveal } from "@/components/motion/BlurReveal";
 import { Magnet } from "@/components/motion/Magnet";
+import { LatarBagian } from "@/components/sections/LatarBagian";
 import { Button } from "@/components/ui/Button";
 import { cariLayananLocale } from "@/lib/data/layanan";
 import { copy, type Locale, withLocale } from "@/lib/i18n";
@@ -33,8 +34,9 @@ export function Perawatan({ locale = "id" }: { locale?: Locale }) {
   return (
     <Section className="border-t border-line">
       <Container>
-        <div className="grid overflow-hidden rounded-2xl border border-line lg:grid-cols-2">
-          <Reveal arah="kiri" className="flex flex-col justify-center gap-5 p-8 sm:p-12">
+        <div className="relative grid overflow-hidden rounded-2xl border border-line lg:grid-cols-2">
+          <LatarBagian sisi="kiri" kecepatan={6} />
+          <Reveal arah="kiri" className="relative z-10 flex flex-col justify-center gap-5 p-8 sm:p-12">
             <Heartbeat size={28} weight="light" className="text-accent" aria-hidden />
             <BlurReveal as="h2" text={c.home.maintenanceTitle} className="text-h2 text-ink block" />
             <p className="text-body text-ink-muted">{c.home.maintenanceLead}</p>
@@ -48,7 +50,7 @@ export function Perawatan({ locale = "id" }: { locale?: Locale }) {
             </div>
           </Reveal>
 
-          <div className="section-texture border-t border-line bg-surface-1/40 p-8 sm:p-12 lg:border-t-0 lg:border-l">
+          <div className="section-texture relative z-10 border-t border-line bg-surface-1/40 p-8 sm:p-12 lg:border-t-0 lg:border-l">
             <RevealGroup className="grid gap-5 sm:grid-cols-2">
               {layanan.didapat.map((poin) => (
                 <RevealItem key={poin} arah="kanan" className="flex items-start gap-3">

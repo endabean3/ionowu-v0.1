@@ -7,6 +7,7 @@ import { KaryaMedia } from "@/components/ui/KaryaMedia";
 import { Button } from "@/components/ui/Button";
 import { RevealGroup, RevealItem } from "@/components/motion/Reveal";
 import { Magnet } from "@/components/motion/Magnet";
+import { LatarBagian } from "@/components/sections/LatarBagian";
 import { daftarKarya } from "@/lib/data/karya";
 import { copy, type Locale, withLocale } from "@/lib/i18n";
 
@@ -26,8 +27,9 @@ export function KaryaPilihan({ locale = "id" }: { locale?: Locale }) {
   ).filter((k): k is (typeof daftar)[number] => Boolean(k));
 
   return (
-    <Section id="karya" className="section-texture border-t border-line">
-      <Container>
+    <Section id="karya" className="section-texture relative overflow-hidden border-t border-line">
+      <LatarBagian sisi="kanan" />
+      <Container className="relative z-10">
         <SectionHeading
           title={c.home.workTitle}
           lead={c.home.workLead}
