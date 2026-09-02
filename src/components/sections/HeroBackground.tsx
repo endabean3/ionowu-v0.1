@@ -67,12 +67,19 @@ export function HeroBackground() {
         // berubah"). Di hero setinggi layar penuh, tingginya dibatasi dan
         // dipudarkan ke bawah lewat .aurora-fade supaya menyatu dengan
         // .glow-field CSS di baliknya, bukan berhenti dengan tepi keras.
-        <div className="aurora-fade absolute inset-x-0 top-0 h-[min(70vh,44rem)] opacity-80">
+        <div className="aurora-fade absolute inset-x-0 top-0 h-[min(70vh,44rem)] opacity-45">
+          {/* Amplitude dan blend diturunkan dari 1.2/0.7 bawaan sebelumnya --
+              nilai itu membuat aurora menyala lebih terang dari default
+              komponennya sendiri (0.9/0.5). Warna brand tidak diubah (tidak
+              boleh, lihat globals.css), tapi versi terangnya justru yang
+              membuat kesan "neon". Diturunkan di bawah bahkan default
+              komponen supaya latar terasa lembut, bukan bercahaya keras --
+              lebih dekat ke pastel walau hue-nya sama persis. */}
           <Aurora
             colorStops={warna}
-            amplitude={1.2}
-            blend={0.7}
-            speed={0.4}
+            amplitude={0.6}
+            blend={0.35}
+            speed={0.35}
             onError={() => setGagal(true)}
           />
         </div>
