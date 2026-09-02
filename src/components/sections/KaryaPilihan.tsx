@@ -6,6 +6,7 @@ import { TiltCard } from "@/components/ui/TiltCard";
 import { KaryaMedia } from "@/components/ui/KaryaMedia";
 import { Button } from "@/components/ui/Button";
 import { RevealGroup, RevealItem } from "@/components/motion/Reveal";
+import { Magnet } from "@/components/motion/Magnet";
 import { daftarKarya } from "@/lib/data/karya";
 import { copy, type Locale, withLocale } from "@/lib/i18n";
 
@@ -25,7 +26,7 @@ export function KaryaPilihan({ locale = "id" }: { locale?: Locale }) {
   ).filter((k): k is (typeof daftar)[number] => Boolean(k));
 
   return (
-    <Section id="karya" className="border-t border-line">
+    <Section id="karya" className="section-texture border-t border-line">
       <Container>
         <SectionHeading
           title={c.home.workTitle}
@@ -34,7 +35,7 @@ export function KaryaPilihan({ locale = "id" }: { locale?: Locale }) {
 
         <RevealGroup className="mt-16 grid gap-6 md:grid-cols-3">
           {karyaPilihan.map((k) => (
-            <RevealItem key={k.slug}>
+            <RevealItem key={k.slug} arah="skala">
               <Link href={withLocale(`/karya/${k.slug}`, locale)} className="block h-full">
                 {/* p-0: pola visual dibuat menyentuh tepi kartu, seperti
                     tangkapan layar sungguhan nantinya. Menang atas padding
@@ -53,10 +54,12 @@ export function KaryaPilihan({ locale = "id" }: { locale?: Locale }) {
         </RevealGroup>
 
         <div className="mt-12 flex justify-center">
-          <Button href={withLocale("/karya", locale)} variant="secondary">
-            {c.common.allWork}
-            <ArrowRight size={16} weight="bold" aria-hidden />
-          </Button>
+          <Magnet jangkauan={60} kekuatan={6}>
+            <Button href={withLocale("/karya", locale)} variant="secondary">
+              {c.common.allWork}
+              <ArrowRight size={16} weight="bold" aria-hidden />
+            </Button>
+          </Magnet>
         </div>
       </Container>
     </Section>

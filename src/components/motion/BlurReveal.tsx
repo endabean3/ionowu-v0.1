@@ -23,6 +23,10 @@ type BlurRevealProps = {
  * Dipakai di setiap judul besar (hero + setiap `SectionHeading`) — batas
  * "maksimal 2 per halaman" dicabut, tapi tetap `whileInView`/sekali jalan
  * lewat `Reveal`, jadi tidak semuanya berjalan bersamaan saat halaman dibuka.
+ *
+ * Kata genap datang dari atas-kiri, kata ganjil dari bawah-kanan (arah dan
+ * rotasi berselang-seling) -- supaya judul tidak terasa monoton "naik dari
+ * bawah" berulang-ulang di setiap bagian.
  */
 export function BlurReveal({
   text,
@@ -37,17 +41,21 @@ export function BlurReveal({
 
   return (
     <Tag className={className}>
-      {daftarKata.map((satuKata, i) => (
+      {daftarKata.map((satuKata, i) => {
+        const dariAtas = i % 2 === 0;
+        return (
         <Fragment key={`${satuKata}-${i}`}>
           <motion.span
             className="inline-block"
             style={{ willChange: "transform, filter, opacity" }}
             initial={
               kurangiGerak
-                ? { opacity: 1, filter: "blur(0px)", y: 0 }
-                : { opacity: 0, filter: "blur(10px)", y: -24 }
+                ? { opacity: 1, filter: "blur(0px)", y: 0, rotate: 0 }
+                : dariAtas
+                  ? { opacity: 0, filter: "blur(10px)", y: -22, rotate: -3 }
+                  : { opacity: 0, filter: "blur(10px)", y: 18, rotate: 3 }
             }
-            whileInView={{ opacity: 1, filter: "blur(0px)", y: 0 }}
+            whileInView={{ opacity: 1, filter: "blur(0px)", y: 0, rotate: 0 }}
             viewport={{ once: true, margin: "0px 0px -12% 0px" }}
             transition={{
               duration: kurangiGerak ? 0 : 0.7,
@@ -59,7 +67,8 @@ export function BlurReveal({
           </motion.span>
           {i < daftarKata.length - 1 ? " " : null}
         </Fragment>
-      ))}
+        );
+      })}
     </Tag>
   );
 }

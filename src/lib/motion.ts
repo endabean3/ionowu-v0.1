@@ -57,6 +57,31 @@ export const masukGroup: Variants = {
   },
 };
 
+/* ---------- 1b. VARIASI ARAH MASUK ----------
+   Dulu satu-satunya arah adalah "naik dari bawah" (24px). Sekarang boleh
+   bervariasi per bagian supaya tidak terasa monoton diulang-ulang di
+   sepanjang halaman -- dipakai lewat prop `arah` di <Reveal>. */
+
+export const masukKiri: Variants = {
+  hidden: { opacity: 0, x: -28 },
+  show: { opacity: 1, x: 0, transition: { duration: duration.slow, ease: ease.out } },
+};
+
+export const masukKanan: Variants = {
+  hidden: { opacity: 0, x: 28 },
+  show: { opacity: 1, x: 0, transition: { duration: duration.slow, ease: ease.out } },
+};
+
+export const masukSkala: Variants = {
+  hidden: { opacity: 0, scale: 0.94, y: 8 },
+  show: {
+    opacity: 1,
+    scale: 1,
+    y: 0,
+    transition: { duration: duration.slow, ease: ease.out },
+  },
+};
+
 /* ---------- 2. SENTUH — naik 4px, 250ms ----------
    Bagian "tepi menyala" dikerjakan lewat CSS di komponen Card/Button,
    supaya tidak ada elemen tambahan yang dianimasikan JavaScript. */

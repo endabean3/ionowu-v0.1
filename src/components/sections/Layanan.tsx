@@ -13,7 +13,7 @@ export function Layanan({ locale = "id" }: { locale?: Locale }) {
   const layanan = daftarLayanan(locale);
 
   return (
-    <Section id="layanan">
+    <Section id="layanan" className="section-texture">
       <Container>
         <SectionHeading
           title={c.home.servicesTitle}
@@ -26,6 +26,7 @@ export function Layanan({ locale = "id" }: { locale?: Locale }) {
             return (
               <RevealItem
                 key={l.slug}
+                arah="skala"
                 className={i < 2 ? "lg:col-span-3" : "lg:col-span-2"}
               >
                 <Link

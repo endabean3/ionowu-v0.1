@@ -14,9 +14,9 @@ export function AjakanPenutup({ locale = "id" }: { locale?: Locale }) {
   const c = copy[locale];
 
   return (
-    <Section className="border-t border-line">
+    <Section className="section-texture border-t border-line">
       <Container width="prose" className="text-center">
-        <Reveal>
+        <Reveal arah="skala">
           <BlurReveal as="h2" text={c.home.finalTitle} className="text-h1 text-ink block" />
           <p className="mt-6 text-lead text-ink-muted">
             {c.home.finalLead}
