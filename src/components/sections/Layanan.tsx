@@ -4,6 +4,7 @@ import { Container, Section } from "@/components/ui/Container";
 import { SectionHeading } from "@/components/ui/SectionHeading";
 import { SpotlightCard } from "@/components/ui/SpotlightCard";
 import { RevealGroup, RevealItem } from "@/components/motion/Reveal";
+import { LatarBagian } from "@/components/sections/LatarBagian";
 import { daftarLayanan } from "@/lib/data/layanan";
 import { IKON_LAYANAN } from "@/lib/data/ikon-layanan";
 import { copy, type Locale, withLocale } from "@/lib/i18n";
@@ -13,22 +14,24 @@ export function Layanan({ locale = "id" }: { locale?: Locale }) {
   const layanan = daftarLayanan(locale);
 
   return (
-    <Section id="layanan" className="section-texture">
-      <Container>
+    <Section id="layanan" className="section-texture relative overflow-hidden">
+      <LatarBagian sisi="kiri" />
+      <Container className="relative z-10">
         <SectionHeading
           title={c.home.servicesTitle}
           lead={c.home.servicesLead}
         />
 
-        <RevealGroup className="mt-14 grid gap-6 sm:grid-cols-2 lg:grid-cols-6">
-          {layanan.map((l, i) => {
+        {/* 3 kolom rata di layar besar -- dulu 6-kolom dengan lebar kartu
+            campuran (2 span-3, 4 span-2) yang menyisakan satu kartu terakhir
+            sendirian dengan ruang kosong lebar di sampingnya (6 item, lebar
+            2+2+2 tidak habis membagi 6 kolom di baris terakhir). 6 item ÷ 3
+            kolom = pas 2 baris penuh, tidak ada sisa. */}
+        <RevealGroup className="mt-14 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          {layanan.map((l) => {
             const Ikon = IKON_LAYANAN[l.ikon];
             return (
-              <RevealItem
-                key={l.slug}
-                arah="skala"
-                className={i < 2 ? "lg:col-span-3" : "lg:col-span-2"}
-              >
+              <RevealItem key={l.slug} arah="skala">
                 <Link
                   href={withLocale(`/layanan/${l.slug}`, locale)}
                   className="group block h-full"

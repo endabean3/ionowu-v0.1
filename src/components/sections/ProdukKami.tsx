@@ -3,6 +3,7 @@ import { Container, Section } from "@/components/ui/Container";
 import { SectionHeading } from "@/components/ui/SectionHeading";
 import { SpotlightCard } from "@/components/ui/SpotlightCard";
 import { RevealGroup, RevealItem } from "@/components/motion/Reveal";
+import { LatarBagian } from "@/components/sections/LatarBagian";
 import { daftarProduk } from "@/lib/data/produk";
 import { copy, type Locale } from "@/lib/i18n";
 
@@ -32,8 +33,9 @@ export function ProdukKami({ locale = "id" }: { locale?: Locale }) {
   const produk = daftarProduk(locale);
 
   return (
-    <Section className="section-texture border-t border-line">
-      <Container>
+    <Section className="section-texture relative overflow-hidden border-t border-line">
+      <LatarBagian sisi="kanan" />
+      <Container className="relative z-10">
         <SectionHeading
           title={c.home.productsTitle}
           lead={c.home.productsLead}
@@ -43,7 +45,10 @@ export function ProdukKami({ locale = "id" }: { locale?: Locale }) {
           {produk.map((p, i) => {
             const isiKartu = (
               <SpotlightCard className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between sm:gap-8">
-                <div className="flex-1">
+                {/* max-w-prose: tanpa ini paragraf tagline/ringkasan
+                    merentang selebar kartu (>1100px di layar besar),
+                    jauh melewati batas baca nyaman. */}
+                <div className="max-w-prose flex-1">
                   <div className="flex flex-wrap items-center gap-3">
                     <h3 className="text-h3 text-ink">{p.nama}</h3>
                     <span

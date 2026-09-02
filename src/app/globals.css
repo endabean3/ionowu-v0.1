@@ -650,25 +650,89 @@
     -webkit-mask-image: linear-gradient(to right, transparent, black 10%, black 90%, transparent);
   }
 
-  /* Tekstur titik halus + dua gumpalan warna brand pudar di pojok --
-     dipakai di bagian yang latarnya polos rata satu warna (bukan hero,
-     hero sudah punya Aurora). Murni CSS, tanpa WebGL/gambar tambahan. */
+  /* Tekstur titik + garis kisi + dua gumpalan warna brand -- dipakai di
+     bagian yang latarnya polos rata satu warna (bukan hero, hero punya
+     Aurora). Murni CSS, tanpa WebGL/gambar tambahan.
+
+     Versi pertama (2 Sep 2026) memakai titik 0.07 alpha dan gumpalan 0.10:
+     diukur di layar 1440px hasilnya praktis tak terlihat -- pemilik produk
+     menyebut latarnya "masih polos", dan memang benar. Versi KEDUA (masih
+     2 Sep) menaikkan gumpalan sampai 0.5 -- kebalikannya: satu warna solid
+     membanjiri seluruh bagian dan tembus lewat header kaca di atasnya.
+     Nilai di bawah ini titik tengahnya -- gumpalan terlihat jelas sebagai
+     cahaya lembut di sudut, tanpa mengubur kartu atau teks di atasnya.
+     Kontras teks tidak terpengaruh: semua lapisan ini duduk di belakang
+     .card yang punya latar sendiri. */
   .section-texture {
     background-image:
-      radial-gradient(circle at 1px 1px, rgb(255 255 255 / 0.07) 1px, transparent 0),
-      radial-gradient(36rem 20rem at 6% 0%, rgb(15 155 156 / 0.10), transparent 70%),
-      radial-gradient(30rem 18rem at 98% 100%, rgb(16 63 105 / 0.28), transparent 72%);
-    background-size: 22px 22px, auto, auto;
-    background-repeat: repeat, no-repeat, no-repeat;
+      /* titik */
+      radial-gradient(circle at 1px 1px, rgb(255 255 255 / 0.1) 1px, transparent 0),
+      /* garis kisi vertikal + horizontal, sangat tipis */
+        linear-gradient(to right, rgb(255 255 255 / 0.03) 1px, transparent 1px),
+      linear-gradient(to bottom, rgb(255 255 255 / 0.03) 1px, transparent 1px),
+      /* gumpalan warna brand */
+        radial-gradient(42rem 24rem at 4% -5%, rgb(15 155 156 / 0.12), transparent 68%),
+      radial-gradient(34rem 22rem at 100% 105%, rgb(16 63 105 / 0.22), transparent 70%);
+    background-size:
+      24px 24px,
+      96px 96px,
+      96px 96px,
+      auto,
+      auto;
+    background-repeat: repeat, repeat, repeat, no-repeat, no-repeat;
   }
 
   [data-theme="light"] .section-texture {
     background-image:
-      radial-gradient(circle at 1px 1px, rgb(16 63 105 / 0.06) 1px, transparent 0),
-      radial-gradient(36rem 20rem at 6% 0%, rgb(15 155 156 / 0.08), transparent 70%),
-      radial-gradient(30rem 18rem at 98% 100%, rgb(247 122 14 / 0.07), transparent 74%);
-    background-size: 22px 22px, auto, auto;
-    background-repeat: repeat, no-repeat, no-repeat;
+      radial-gradient(circle at 1px 1px, rgb(16 63 105 / 0.1) 1px, transparent 0),
+      linear-gradient(to right, rgb(16 63 105 / 0.04) 1px, transparent 1px),
+      linear-gradient(to bottom, rgb(16 63 105 / 0.04) 1px, transparent 1px),
+      radial-gradient(42rem 24rem at 4% -5%, rgb(15 155 156 / 0.1), transparent 68%),
+      radial-gradient(34rem 22rem at 100% 105%, rgb(247 122 14 / 0.09), transparent 70%);
+    background-size:
+      24px 24px,
+      96px 96px,
+      96px 96px,
+      auto,
+      auto;
+    background-repeat: repeat, repeat, repeat, no-repeat, no-repeat;
+  }
+
+  /* Gumpalan cahaya yang mengambang pelan. Dipakai sebagai elemen terpisah
+     di dalam bagian ber-`position: relative`, di belakang isinya, supaya
+     latar tidak hanya bertekstur tapi juga HIDUP -- ini yang membuat sebuah
+     bagian terasa punya kedalaman, bukan sekadar warna rata.
+
+     Hanya transform dan opacity yang dianimasikan (tidak memicu layout),
+     dan seluruh animasi otomatis mati lewat blok prefers-reduced-motion
+     di bawah berkas ini. */
+  .blob-drift {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(90px);
+    opacity: 0.16;
+    pointer-events: none;
+    will-change: transform;
+    animation: blob-drift 26s ease-in-out infinite alternate;
+  }
+
+  .blob-drift-lambat {
+    animation-duration: 38s;
+    animation-direction: alternate-reverse;
+  }
+
+  [data-theme="light"] .blob-drift {
+    opacity: 0.13;
+    filter: blur(100px);
+  }
+}
+
+@keyframes blob-drift {
+  from {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  to {
+    transform: translate3d(6%, -8%, 0) scale(1.18);
   }
 }
 

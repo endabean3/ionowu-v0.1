@@ -13,12 +13,18 @@ import type { Transition, Variants } from "motion/react";
    aturan aksesibilitas, bukan aturan selera.
    ============================================================ */
 
-/** Lama gerakan, dalam detik (motion memakai detik, bukan milidetik). */
+/** Lama gerakan, dalam detik (motion memakai detik, bukan milidetik).
+ *
+ *  Dinaikkan 2 Sep 2026: nilai lama (0.6 untuk masuk, 1.0 untuk hero) terasa
+ *  tergesa untuk teks sebesar display di hero -- makin besar dan makin jauh
+ *  elemennya bergerak, makin lama waktu yang dibutuhkan supaya gerakannya
+ *  terbaca sebagai gerakan, bukan kedipan. Umpan balik sentuh/tekan TIDAK
+ *  ikut dinaikkan: itu harus tetap terasa langsung di bawah jari. */
 export const duration = {
-  fast: 0.15, // sentuhan kecil
-  mid: 0.3, // sebagian besar hal
-  slow: 0.6, // elemen masuk
-  hero: 1.0, // pembuka halaman saja
+  fast: 0.15, // sentuhan kecil -- sengaja tetap cepat
+  mid: 0.35, // sebagian besar hal
+  slow: 0.9, // elemen masuk
+  hero: 1.4, // pembuka halaman saja
 } as const;
 
 /** Kelengkungan gerak. DILARANG memakai `linear` atau `ease` bawaan. */
@@ -36,7 +42,8 @@ export const spring: Transition = {
 };
 
 /** Jeda antar elemen dalam satu kelompok. */
-export const STAGGER = 0.08; // 80 ms
+export const STAGGER = 0.12; // 120 ms -- dulu 80 ms, terlalu rapat sampai
+// satu kelompok terasa muncul serentak, bukan berurutan.
 
 /* ---------- 1. MASUK — naik 24px + memudar muncul, 600ms ---------- */
 
