@@ -87,7 +87,12 @@ export function ProdukKami({ locale = "id" }: { locale?: Locale }) {
                 {p.url && (
                   <span className="inline-flex shrink-0 items-center gap-1.5 self-start text-small font-medium text-accent transition-colors duration-mid ease-out group-hover:text-accent-deep">
                     {c.home.productsVisit}
-                    <ArrowUpRight size={16} weight="bold" aria-hidden />
+                    <ArrowUpRight
+                      size={16}
+                      weight="bold"
+                      aria-hidden
+                      className="transition-transform duration-mid ease-out group-hover:translate-x-1 group-hover:-translate-y-1"
+                    />
                   </span>
                 )}
               </SpotlightCard>

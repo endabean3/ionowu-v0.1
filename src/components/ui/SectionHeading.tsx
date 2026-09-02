@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
 import { Reveal } from "@/components/motion/Reveal";
+import { BlurReveal } from "@/components/motion/BlurReveal";
 
 type SectionHeadingProps = {
   /** Label kecil di atas judul, mis. "Layanan". Opsional. */
@@ -34,14 +35,17 @@ export function SectionHeading({
         </div>
       )}
 
-      <Tag
-        className={cn(
-          as === "h1" ? "text-h1" : "text-h2",
-          "text-ink",
-        )}
-      >
-        {title}
-      </Tag>
+      {typeof title === "string" ? (
+        <BlurReveal
+          as={as}
+          text={title}
+          className={cn(as === "h1" ? "text-h1" : "text-h2", "text-ink block")}
+        />
+      ) : (
+        <Tag className={cn(as === "h1" ? "text-h1" : "text-h2", "text-ink")}>
+          {title}
+        </Tag>
+      )}
 
       {lead && <p className="mt-5 text-lead text-ink-muted">{lead}</p>}
     </Reveal>

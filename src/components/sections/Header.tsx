@@ -49,7 +49,7 @@ export function Header() {
         <Link
           href={withLocale("/", locale)}
           aria-label={c.nav.homeLabel}
-          className="rounded-full"
+          className="rounded-full transition-transform duration-mid ease-out hover:scale-105 active:scale-95"
         >
           <Logo tinggi={28} />
         </Link>
