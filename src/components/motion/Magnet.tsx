@@ -16,8 +16,8 @@ type MagnetProps = {
  * Elemen tertarik mengikuti kursor saat kursor mendekat.
  * Diadaptasi dari referensi/react-bits — tanpa dependensi tambahan.
  *
- * Dokumen 06: efek kursor maksimal SATU jenis untuk seluruh website.
- * Ini dipakai HANYA untuk tombol aksi utama di hero.
+ * Batas "hanya satu efek kursor, hanya tombol hero" dicabut — dipakai di
+ * setiap tombol aksi utama sekarang, bukan cuma hero.
  *
  * Mati otomatis di HP (tidak ada kursor) dan saat animasi dimatikan.
  */

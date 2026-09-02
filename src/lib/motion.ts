@@ -1,10 +1,16 @@
 import type { Transition, Variants } from "motion/react";
 
 /* ============================================================
-   EMPAT GERAKAN BAKU — dokumen 06
-   Ini SATU-SATUNYA sumber gerakan di seluruh website.
-   Sebelum menambah animasi baru, tanya dulu:
-   "Apakah ini bisa dicapai dengan empat gerakan di bawah?"
+   EMPAT GERAKAN BAKU — dasar, bukan lagi batas atas
+   Awalnya (dokumen 06) ini satu-satunya sumber gerakan di seluruh
+   website, dan jumlah elemen bergerak per layar dibatasi ketat.
+   Pemilik produk secara eksplisit mencabut pembatasan itu (2 Sep
+   2026): gerakan sekarang bebas jumlah dan bentuknya, selama tetap
+   memakai token durasi/kelengkungan di bawah supaya iramanya masih
+   terasa satu keluarga, bukan kumpulan efek yang tidak nyambung.
+   Yang TIDAK dicabut: dukungan prefers-reduced-motion (`diam`,
+   `useReducedMotion`) tetap wajib di setiap animasi baru — itu
+   aturan aksesibilitas, bukan aturan selera.
    ============================================================ */
 
 /** Lama gerakan, dalam detik (motion memakai detik, bukan milidetik). */
@@ -29,7 +35,7 @@ export const spring: Transition = {
   damping: 30,
 };
 
-/** Jeda antar elemen dalam satu kelompok. Maksimal 6 elemen. */
+/** Jeda antar elemen dalam satu kelompok. */
 export const STAGGER = 0.08; // 80 ms
 
 /* ---------- 1. MASUK — naik 24px + memudar muncul, 600ms ---------- */

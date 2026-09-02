@@ -41,7 +41,7 @@ export function Reveal({ children, className, delay = 0, as = "div" }: RevealPro
 
 /**
  * Pembungkus untuk sekelompok elemen yang masuk berurutan (jeda 80ms).
- * Pakai bersama <RevealItem> sebagai anak langsungnya. Maksimal 6 anak.
+ * Pakai bersama <RevealItem> sebagai anak langsungnya.
  */
 export function RevealGroup({
   children,

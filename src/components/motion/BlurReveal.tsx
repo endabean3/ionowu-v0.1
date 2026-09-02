@@ -11,7 +11,7 @@ type BlurRevealProps = {
   delayAntarKata?: number;
   /** Tunda mulai animasi seluruh judul. */
   delay?: number;
-  as?: "h1" | "h2" | "p" | "span";
+  as?: "h1" | "h2" | "h3" | "p" | "span";
 };
 
 /**
@@ -20,8 +20,9 @@ type BlurRevealProps = {
  * Diadaptasi dari referensi/react-bits/.../TextAnimations/BlurText — sudah
  * memakai `motion` (bukan GSAP), jadi tidak menambah pustaka baru ke bujet.
  *
- * Dipakai HANYA untuk judul pembuka halaman (dokumen 06: animasi teks berat
- * maksimal 2 per halaman).
+ * Dipakai di setiap judul besar (hero + setiap `SectionHeading`) — batas
+ * "maksimal 2 per halaman" dicabut, tapi tetap `whileInView`/sekali jalan
+ * lewat `Reveal`, jadi tidak semuanya berjalan bersamaan saat halaman dibuka.
  */
 export function BlurReveal({
   text,
@@ -46,7 +47,8 @@ export function BlurReveal({
                 ? { opacity: 1, filter: "blur(0px)", y: 0 }
                 : { opacity: 0, filter: "blur(10px)", y: -24 }
             }
-            animate={{ opacity: 1, filter: "blur(0px)", y: 0 }}
+            whileInView={{ opacity: 1, filter: "blur(0px)", y: 0 }}
+            viewport={{ once: true, margin: "0px 0px -12% 0px" }}
             transition={{
               duration: kurangiGerak ? 0 : 0.7,
               ease: ease.out,

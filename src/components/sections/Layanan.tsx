@@ -33,12 +33,22 @@ export function Layanan({ locale = "id" }: { locale?: Locale }) {
                   className="group block h-full"
                 >
                   <SpotlightCard className="h-full min-h-[15rem]">
-                    <Ikon size={28} weight="light" className="text-accent" aria-hidden />
+                    <Ikon
+                      size={28}
+                      weight="light"
+                      className="text-accent transition-transform duration-mid ease-out group-hover:-translate-y-1 group-hover:rotate-6 group-hover:scale-110"
+                      aria-hidden
+                    />
                     <h3 className="mt-5 text-h3 text-ink">{l.judul}</h3>
                     <p className="mt-3 text-ink-muted">{l.kalimat}</p>
                     <span className="mt-6 inline-flex items-center gap-1.5 text-small font-medium text-ink-muted transition-colors duration-mid ease-out group-hover:text-accent">
                       {c.common.learnMore}
-                      <ArrowUpRight size={16} weight="bold" aria-hidden />
+                      <ArrowUpRight
+                        size={16}
+                        weight="bold"
+                        aria-hidden
+                        className="transition-transform duration-mid ease-out group-hover:translate-x-1 group-hover:-translate-y-1"
+                      />
                     </span>
                   </SpotlightCard>
                 </Link>
