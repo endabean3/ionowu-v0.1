@@ -32,7 +32,7 @@ export function ProdukKami({ locale = "id" }: { locale?: Locale }) {
   const produk = daftarProduk(locale);
 
   return (
-    <Section className="border-t border-line">
+    <Section className="section-texture border-t border-line">
       <Container>
         <SectionHeading
           title={c.home.productsTitle}
@@ -40,7 +40,7 @@ export function ProdukKami({ locale = "id" }: { locale?: Locale }) {
         />
 
         <RevealGroup className="mt-12 flex flex-col gap-6">
-          {produk.map((p) => {
+          {produk.map((p, i) => {
             const isiKartu = (
               <SpotlightCard className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between sm:gap-8">
                 <div className="flex-1">
@@ -99,7 +99,7 @@ export function ProdukKami({ locale = "id" }: { locale?: Locale }) {
             );
 
             return (
-              <RevealItem key={p.slug}>
+              <RevealItem key={p.slug} arah={i % 2 === 0 ? "kiri" : "kanan"}>
                 {p.url ? (
                   <a
                     href={p.url}

@@ -2,7 +2,17 @@
 
 import { motion, useReducedMotion } from "motion/react";
 import type { ReactNode } from "react";
-import { diam, masuk, masukGroup } from "@/lib/motion";
+import { diam, masuk, masukGroup, masukKiri, masukKanan, masukSkala } from "@/lib/motion";
+
+/** Arah datang elemen. `atas` = gerakan baku lama (naik 24px). */
+type Arah = "atas" | "kiri" | "kanan" | "skala";
+
+const VARIAN_ARAH = {
+  atas: masuk,
+  kiri: masukKiri,
+  kanan: masukKanan,
+  skala: masukSkala,
+} as const;
 
 type RevealProps = {
   children: ReactNode;
@@ -11,23 +21,25 @@ type RevealProps = {
   delay?: number;
   /** Elemen HTML yang dipakai. Bawaan: div. */
   as?: "div" | "section" | "li" | "span" | "p";
+  /** Arah datang. Bawaan "atas" -- variasikan antar bagian supaya tidak monoton. */
+  arah?: Arah;
 };
 
 /**
- * Gerakan MASUK (dokumen 06): naik 24px + memudar muncul, 600ms.
+ * Gerakan MASUK: memudar muncul + bergeser dari satu arah, 600ms.
  * Berjalan sekali saat elemen masuk ke layar, lalu berhenti.
  *
  * Kalau pengguna mematikan animasi di setelan perangkatnya,
  * elemen langsung tampil tanpa gerakan.
  */
-export function Reveal({ children, className, delay = 0, as = "div" }: RevealProps) {
+export function Reveal({ children, className, delay = 0, as = "div", arah = "atas" }: RevealProps) {
   const kurangiGerak = useReducedMotion();
   const Tag = motion[as];
 
   return (
     <Tag
       className={className}
-      variants={kurangiGerak ? diam : masuk}
+      variants={kurangiGerak ? diam : VARIAN_ARAH[arah]}
       initial="hidden"
       whileInView="show"
       /* once: animasi berhenti setelah selesai — hemat tenaga saat menggulir */
@@ -69,12 +81,13 @@ export function RevealItem({
   children,
   className,
   as = "div",
+  arah = "atas",
 }: Omit<RevealProps, "delay">) {
   const kurangiGerak = useReducedMotion();
   const Tag = motion[as];
 
   return (
-    <Tag className={className} variants={kurangiGerak ? diam : masuk}>
+    <Tag className={className} variants={kurangiGerak ? diam : VARIAN_ARAH[arah]}>
       {children}
     </Tag>
   );

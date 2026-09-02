@@ -15,7 +15,7 @@ export function CaraKerja({ locale = "id" }: { locale?: Locale }) {
   const c = copy[locale];
 
   return (
-    <Section id="cara-kerja" className="border-t border-line bg-surface-1/40">
+    <Section id="cara-kerja" className="section-texture border-t border-line bg-surface-1/40">
       <Container className="grid gap-14 lg:grid-cols-[minmax(16rem,0.65fr)_minmax(0,1.35fr)] lg:gap-20">
         <SectionHeading
           title={c.home.processTitle}
@@ -28,6 +28,7 @@ export function CaraKerja({ locale = "id" }: { locale?: Locale }) {
             return (
               <RevealItem
                 key={judul}
+                arah={i % 2 === 0 ? "kiri" : "kanan"}
                 className="group grid grid-cols-[2.5rem_minmax(0,1fr)] gap-x-4 gap-y-3 border-b border-line py-7 transition-colors duration-mid ease-out last:border-b-0 hover:bg-surface-1/60 sm:grid-cols-[3rem_minmax(10rem,0.7fr)_minmax(0,1fr)] sm:items-start sm:gap-6 sm:py-8"
               >
                 <div className="tabular pt-1 text-small text-accent transition-transform duration-mid ease-out group-hover:-translate-y-0.5">
