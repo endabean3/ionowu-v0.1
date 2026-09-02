@@ -157,6 +157,27 @@ export const copy = {
           "Lulusan Sarjana Terapan Teknik Informatika, Politeknik Negeri Jember. Berpengalaman membangun sistem informasi rumah sakit, gudang, dan business intelligence, dari bug fixing, pengembangan API, sampai pemasangan server.",
         knowMoreTitle: "Mau bicara langsung?",
         knowMoreLead: "Ceritakan kebutuhan Anda. Konsultasi awal gratis dan tanpa ikatan.",
+        designTitle: "Standar desain yang kami pegang",
+        designLead:
+          "Bukan klaim -- bisa dilihat langsung di situs ini. Praktik yang sama dipakai di setiap sistem yang kami bangun untuk klien.",
+        designPrinciples: [
+          [
+            "Kontras dihitung, bukan ditaksir",
+            "Setiap pasangan warna teks-latar diukur rasio WCAG-nya sebelum dipakai, bukan sekadar terlihat cukup gelap di mata.",
+          ],
+          [
+            "Sistem token tiga lapis",
+            "Primitif, semantik, komponen -- warna dan jarak tidak pernah ditulis manual di kode. Satu perubahan token, konsisten di seluruh halaman.",
+          ],
+          [
+            "Gerak yang dihormati, bukan dipaksakan",
+            "Setiap animasi punya versi diam untuk pengguna yang mematikan efek gerak di perangkatnya -- halaman tetap utuh, bukan rusak.",
+          ],
+          [
+            "Anggaran performa di HP",
+            "Efek visual berat seperti latar WebGL otomatis mati di layar kecil, dan selalu punya jalur mundur kalau gagal dimuat.",
+          ],
+        ],
       },
       contact: {
         title: "Ceritakan kebutuhan Anda",
@@ -290,6 +311,27 @@ export const copy = {
           "Bachelor of Applied Computer Science graduate from Politeknik Negeri Jember. Experienced in hospital systems, inventory systems, and business intelligence, from bug fixing and API development to server setup.",
         knowMoreTitle: "Want to talk directly?",
         knowMoreLead: "Tell us what you need. The first consultation is free.",
+        designTitle: "Design standards we hold ourselves to",
+        designLead:
+          "Not a claim -- you can see it on this site right now. The same practice goes into every system we build for clients.",
+        designPrinciples: [
+          [
+            "Contrast is measured, not eyeballed",
+            "Every text-background pairing has its WCAG ratio checked before use, not just judged dark enough by eye.",
+          ],
+          [
+            "A three-layer token system",
+            "Primitive, semantic, component -- colours and spacing are never hand-written in code. One token change, consistent across every page.",
+          ],
+          [
+            "Motion that's respected, not forced",
+            "Every animation has a still version for users who disable motion on their device -- the page stays intact, not broken.",
+          ],
+          [
+            "A performance budget for phones",
+            "Heavy visuals like a WebGL background switch off on small screens automatically, and always have a fallback if they fail to load.",
+          ],
+        ],
       },
       contact: {
         title: "Tell us what you need",
@@ -421,6 +463,14 @@ export const copy = {
           "毕业于 Politeknik Negeri Jember 应用计算机科学专业。拥有医院系统、库存系统和商业智能项目经验，涵盖问题修复、API 开发和服务器部署。",
         knowMoreTitle: "想直接沟通？",
         knowMoreLead: "告诉我们您的需求。首次咨询免费。",
+        designTitle: "我们坚持的设计标准",
+        designLead: "这不是口号——您现在就能在本站看到。我们为客户构建的每个系统都遵循同样的实践。",
+        designPrinciples: [
+          ["对比度经过计算，而非目测", "每一组文字与背景的配色在使用前都会核算 WCAG 对比度，而不是凭感觉判断够不够深。"],
+          ["三层级的设计令牌系统", "原始值、语义层、组件层——颜色与间距从不在代码中手写。改一个令牌，全站保持一致。"],
+          ["尊重而非强加的动效", "每个动画都有一个静止版本，供关闭设备动效的用户使用——页面保持完整，而不是损坏。"],
+          ["面向手机的性能预算", "WebGL 背景等重型视觉效果在小屏幕上会自动关闭，加载失败时也始终有备用方案。"],
+        ],
       },
       contact: {
         title: "告诉我们您的需求",

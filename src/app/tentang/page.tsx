@@ -9,6 +9,7 @@ import {
   GithubLogo,
   LinkedinLogo,
   ArrowRight,
+  Check,
 } from "@phosphor-icons/react/dist/ssr";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { Container, Section } from "@/components/ui/Container";
@@ -200,6 +201,39 @@ export function HalamanTentangContent({ locale }: { locale: Locale }) {
               Politeknik Negeri Jember - Teknik Informatika
             </span>
           </Reveal>
+        </Container>
+      </Section>
+
+      {/* ---------- Prinsip Desain ----------
+          Fakta, bukan klaim generik "kami ahli UI/UX modern" -- keempat
+          poin ini bisa dibuktikan langsung dari kode situs ini sendiri:
+          lihat komentar rasio WCAG di globals.css, sistem token tiga lapis
+          di berkas yang sama, versi "diam" di motion.ts untuk
+          prefers-reduced-motion, dan HeroBackground.tsx yang mematikan
+          WebGL di bawah 768px. Menunjukkan lebih meyakinkan daripada
+          menyebut diri "ahli". */}
+      <Section className="border-t border-line bg-surface-1/40">
+        <Container width="prose">
+          <Reveal>
+            <h2 className="text-h2 text-ink">{c.pages.about.designTitle}</h2>
+            <p className="mt-4 text-ink-muted">{c.pages.about.designLead}</p>
+          </Reveal>
+          <RevealGroup className="mt-10 grid gap-6 sm:grid-cols-2">
+            {c.pages.about.designPrinciples.map(([judul, isi]) => (
+              <RevealItem key={judul} className="flex items-start gap-3">
+                <Check
+                  size={18}
+                  weight="bold"
+                  className="mt-1 shrink-0 text-accent"
+                  aria-hidden
+                />
+                <div>
+                  <h3 className="text-body font-medium text-ink">{judul}</h3>
+                  <p className="mt-1.5 text-small text-ink-muted">{isi}</p>
+                </div>
+              </RevealItem>
+            ))}
+          </RevealGroup>
         </Container>
       </Section>
 
