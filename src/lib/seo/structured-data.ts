@@ -1,5 +1,5 @@
 import { copy, withLocale, type Locale } from "@/lib/i18n";
-import { EMAIL_KONTAK, WA_E164 } from "@/lib/data/kontak";
+import { EMAIL_KONTAK } from "@/lib/data/kontak";
 
 /**
  * Data terstruktur schema.org.
@@ -38,7 +38,6 @@ export function organizationSchema(locale: Locale = "id") {
       "@type": "ContactPoint",
       contactType: "sales",
       email: EMAIL_KONTAK,
-      telephone: WA_E164,
       availableLanguage: ["id", "en", "zh"],
     },
   };
@@ -122,7 +121,6 @@ export function localServiceSchema(input: {
     url: `${SITE_URL}${input.path}`,
     parentOrganization: { "@id": ORGANIZATION_ID },
     email: EMAIL_KONTAK,
-    telephone: WA_E164,
     areaServed: input.wilayah.map((nama) => ({
       "@type": "AdministrativeArea",
       name: nama,
