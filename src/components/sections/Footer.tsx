@@ -5,14 +5,16 @@ import { usePathname } from "next/navigation";
 import { Container } from "@/components/ui/Container";
 import { Logo } from "@/components/ui/Logo";
 import { copy, localeFromPath, withLocale } from "@/lib/i18n";
-import { EMAIL_KONTAK, WA_TAMPIL, waHref } from "@/lib/data/kontak";
+import { EMAIL_KONTAK, waHref } from "@/lib/data/kontak";
 
 /**
  * Kaki halaman (dokumen 03).
  *
  * WhatsApp dan email resmi sudah ditetapkan dan ditampilkan di sini —
- * keduanya diambil dari src/lib/data/kontak.ts supaya nomor yang muncul di
- * kaki halaman tidak pernah berbeda dari yang muncul di halaman Kontak.
+ * keduanya diambil dari src/lib/data/kontak.ts supaya tautannya tidak pernah
+ * berbeda dari yang muncul di halaman Kontak. Nomor WhatsApp SENGAJA tidak
+ * ditulis sebagai teks (permintaan pemilik produk, 3 Sep 2026) — tautannya
+ * tetap berfungsi penuh, hanya angkanya yang tidak ditampilkan.
  *
  * Alamat kantor dan tautan media sosial MASIH `[BELUM ADA]` (dokumen 01 dan
  * 07 Tahap 0), jadi tetap tidak ditulis — bukan lupa.
@@ -64,7 +66,7 @@ export function Footer() {
             rel="noopener noreferrer"
             className="text-ink-muted transition-colors duration-mid ease-out hover:text-ink"
           >
-            WhatsApp {WA_TAMPIL}
+            WhatsApp
           </a>
           <a
             href={`mailto:${EMAIL_KONTAK}`}

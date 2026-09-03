@@ -188,19 +188,6 @@ export function HalamanTentangContent({ locale }: { locale: Locale }) {
               </RevealItem>
             ))}
           </RevealGroup>
-
-          <Reveal className="mt-10 flex items-center gap-4 opacity-80">
-            <Image
-              src="/tentang/politeknik-jember.png"
-              alt="Politeknik Negeri Jember"
-              width={40}
-              height={21}
-              className="h-8 w-auto"
-            />
-            <span className="text-small text-ink-muted">
-              Politeknik Negeri Jember - Teknik Informatika
-            </span>
-          </Reveal>
         </Container>
       </Section>
 

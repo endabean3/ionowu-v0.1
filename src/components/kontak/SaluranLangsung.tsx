@@ -1,17 +1,17 @@
 import { WhatsappLogo, EnvelopeSimple } from "@phosphor-icons/react/dist/ssr";
 import { Card } from "@/components/ui/Card";
 import { copy, type Locale } from "@/lib/i18n";
-import { EMAIL_KONTAK, WA_TAMPIL, waHref } from "@/lib/data/kontak";
+import { EMAIL_KONTAK, waHref } from "@/lib/data/kontak";
 
 /**
  * Saluran kontak langsung: WhatsApp dan email.
  *
  * Dipakai di halaman Kontak dan halaman lokal, dari satu komponen yang sama —
- * supaya nomor yang tampil tidak pernah berbeda antar halaman.
+ * supaya labelnya tidak pernah berbeda antar halaman.
  *
- * Nomor ditulis apa adanya sebagai teks, bukan hanya disembunyikan di balik
- * tautan: sebagian pengunjung menyalin nomornya untuk disimpan lebih dulu, dan
- * mesin pencari juga membaca nomor yang terlihat, bukan cuma href-nya.
+ * Nomor WhatsApp SENGAJA tidak ditulis sebagai teks (permintaan pemilik
+ * produk, 3 Sep 2026) -- tautannya tetap berfungsi penuh (`waHref()`), yang
+ * dihilangkan cuma angka yang tampil di layar dan di kode halaman.
  */
 export function SaluranLangsung({
   locale,
@@ -27,7 +27,7 @@ export function SaluranLangsung({
     {
       ikon: WhatsappLogo,
       label: c.waLabel,
-      nilai: WA_TAMPIL,
+      nilai: c.waAction,
       href: waHref(),
       eksternal: true,
     },

@@ -10,7 +10,7 @@ import { Reveal, RevealGroup, RevealItem } from "@/components/motion/Reveal";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { daftarLayanan } from "@/lib/data/layanan";
 import { daftarKarya } from "@/lib/data/karya";
-import { WA_TAMPIL, waHref } from "@/lib/data/kontak";
+import { waHref } from "@/lib/data/kontak";
 import {
   breadcrumbSchema,
   localServiceSchema,
@@ -249,7 +249,7 @@ export default function HalamanProgrammerTrenggalek() {
             <div className="mt-8 flex flex-wrap items-center gap-4">
               <Button href={waHref("Halo Ionowu, saya dari Trenggalek dan ingin berkonsultasi soal")}>
                 <WhatsappLogo size={18} weight="fill" aria-hidden />
-                WhatsApp {WA_TAMPIL}
+                WhatsApp
               </Button>
               <Button href="/kontak" variant="ghost">
                 Isi formulir

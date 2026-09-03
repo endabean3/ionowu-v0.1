@@ -15,20 +15,16 @@
 /** Tujuan seluruh notifikasi formulir kontak. */
 export const EMAIL_KONTAK = "io@ionowu.com";
 
-/** Nomor WhatsApp resmi, apa adanya seperti ditulis orang Indonesia. */
-export const WA_LOKAL = "082229412035";
-
-/**
- * Bentuk E.164 — dipakai untuk `tel:` dan data terstruktur.
- * Awalan `0` diganti kode negara Indonesia (+62), sesuai standar.
- */
-export const WA_E164 = "+6282229412035";
-
 /** wa.me menuntut nomor tanpa tanda plus dan tanpa pemisah apa pun. */
 export const WA_LINK = "https://wa.me/6282229412035";
 
-/** Bentuk yang enak dibaca manusia di layar. */
-export const WA_TAMPIL = "0822-2941-2035";
+/**
+ * Angkanya SENGAJA tidak diekspor dalam bentuk siap-tampil (permintaan
+ * pemilik produk, 3 Sep 2026) -- tidak ada lagi `WA_TAMPIL`/`WA_E164`/
+ * `WA_LOKAL`. Nomor tetap hidup lewat `WA_LINK`/`waHref()` di bawah, dipakai
+ * hanya sebagai href, tidak pernah dirender sebagai teks yang bisa dibaca
+ * atau disalin pengunjung.
+ */
 
 /**
  * Pesan pembuka yang sudah terisi saat tautan WhatsApp dibuka.
