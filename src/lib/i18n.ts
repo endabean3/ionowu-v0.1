@@ -162,20 +162,20 @@ export const copy = {
           "Bukan klaim -- bisa dilihat langsung di situs ini. Praktik yang sama dipakai di setiap sistem yang kami bangun untuk klien.",
         designPrinciples: [
           [
-            "Kontras dihitung, bukan ditaksir",
-            "Setiap pasangan warna teks-latar diukur rasio WCAG-nya sebelum dipakai, bukan sekadar terlihat cukup gelap di mata.",
+            "Warna diukur, bukan ditaksir",
+            "Setiap warna teks di atas warna latar dicek dulu apakah cukup jelas dibaca -- bukan sekadar dilihat sekilas apakah sudah cukup gelap.",
           ],
           [
-            "Sistem token tiga lapis",
-            "Primitif, semantik, komponen -- warna dan jarak tidak pernah ditulis manual di kode. Satu perubahan token, konsisten di seluruh halaman.",
+            "Satu perubahan, konsisten di semua halaman",
+            "Warna dan jarak diatur dari satu tempat, bukan ditulis ulang manual di tiap halaman -- jadi kalau ada yang diubah, semua bagian situs otomatis ikut menyesuaikan.",
           ],
           [
-            "Gerak yang dihormati, bukan dipaksakan",
-            "Setiap animasi punya versi diam untuk pengguna yang mematikan efek gerak di perangkatnya -- halaman tetap utuh, bukan rusak.",
+            "Animasi bisa dimatikan, situsnya tetap utuh",
+            "Kalau pengguna mematikan efek animasi di HP-nya, situs ini otomatis menyesuaikan -- tampilannya tetap rapi, bukan malah rusak atau kosong.",
           ],
           [
-            "Anggaran performa di HP",
-            "Efek visual berat seperti latar WebGL otomatis mati di layar kecil, dan selalu punya jalur mundur kalau gagal dimuat.",
+            "Tetap cepat walau sinyal HP pas-pasan",
+            "Efek visual yang berat otomatis dimatikan di layar HP supaya situs tetap cepat, dan selalu ada tampilan cadangan kalau efeknya gagal dimuat.",
           ],
         ],
       },
@@ -316,20 +316,20 @@ export const copy = {
           "Not a claim -- you can see it on this site right now. The same practice goes into every system we build for clients.",
         designPrinciples: [
           [
-            "Contrast is measured, not eyeballed",
-            "Every text-background pairing has its WCAG ratio checked before use, not just judged dark enough by eye.",
+            "Colors are checked, not eyeballed",
+            "Every text-on-background color pairing is checked for readability before we use it -- not just judged 'dark enough' by eye.",
           ],
           [
-            "A three-layer token system",
-            "Primitive, semantic, component -- colours and spacing are never hand-written in code. One token change, consistent across every page.",
+            "One change, consistent everywhere",
+            "Colors and spacing are set from a single place, not rewritten by hand on every page -- so one change updates the whole site automatically.",
           ],
           [
-            "Motion that's respected, not forced",
-            "Every animation has a still version for users who disable motion on their device -- the page stays intact, not broken.",
+            "Animations can be turned off, the site stays intact",
+            "If someone disables motion on their device, the site adjusts automatically -- it stays clean, not broken or empty.",
           ],
           [
-            "A performance budget for phones",
-            "Heavy visuals like a WebGL background switch off on small screens automatically, and always have a fallback if they fail to load.",
+            "Still fast on a weak phone signal",
+            "Heavy visual effects switch off automatically on small screens to keep the site fast, and always have a backup look if they fail to load.",
           ],
         ],
       },
@@ -466,10 +466,10 @@ export const copy = {
         designTitle: "我们坚持的设计标准",
         designLead: "这不是口号——您现在就能在本站看到。我们为客户构建的每个系统都遵循同样的实践。",
         designPrinciples: [
-          ["对比度经过计算，而非目测", "每一组文字与背景的配色在使用前都会核算 WCAG 对比度，而不是凭感觉判断够不够深。"],
-          ["三层级的设计令牌系统", "原始值、语义层、组件层——颜色与间距从不在代码中手写。改一个令牌，全站保持一致。"],
-          ["尊重而非强加的动效", "每个动画都有一个静止版本，供关闭设备动效的用户使用——页面保持完整，而不是损坏。"],
-          ["面向手机的性能预算", "WebGL 背景等重型视觉效果在小屏幕上会自动关闭，加载失败时也始终有备用方案。"],
+          ["配色经过检查，而非凭感觉", "每一组文字与背景的配色，使用前都会检查是否容易阅读，而不是单凭肉眼判断够不够深。"],
+          ["改一处，全站自动统一", "颜色和间距统一从一个地方设置，不需要在每个页面手动重写——只要改一次，全站都会自动更新。"],
+          ["就算关闭动画，页面也不会乱", "如果用户在设备上关闭了动效，网站会自动调整——页面依然完整，不会显示错乱或空白。"],
+          ["网速差也能快速打开", "较重的视觉效果会在小屏幕上自动关闭，让网站保持流畅，加载失败时也一定有备用画面。"],
         ],
       },
       contact: {
