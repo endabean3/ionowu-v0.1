@@ -7,7 +7,7 @@ import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { List, X } from "@phosphor-icons/react";
 import { Logo } from "@/components/ui/Logo";
 import { ThemeToggle } from "@/components/theme/ThemeToggle";
-import { ease } from "@/lib/motion";
+import { bukaPanel, diam, ease, isiPanel } from "@/lib/motion";
 import {
   copy,
   LOCALE_LABEL,
@@ -121,21 +121,44 @@ export function Header() {
             onClick={() => setMenuTerbuka((v) => !v)}
             className="glass flex h-11 w-11 items-center justify-center rounded-full text-ink"
           >
-            {menuTerbuka ? <X size={20} /> : <List size={20} />}
+            {/* Ikon berputar saat berganti, bukan tukar seketika -- tombolnya
+                jadi ikut menyatakan "membuka" dan "menutup", bukan cuma
+                berubah gambar. `mode="wait"`: yang lama selesai keluar dulu,
+                jadi dua ikon tidak pernah bertumpuk. Ikonnya `aria-hidden`
+                karena tombolnya sudah punya `aria-label` sendiri. */}
+            <AnimatePresence mode="wait" initial={false}>
+              <motion.span
+                key={menuTerbuka ? "tutup" : "buka"}
+                initial={kurangiGerak ? false : { opacity: 0, rotate: -90, scale: 0.6 }}
+                animate={{ opacity: 1, rotate: 0, scale: 1 }}
+                exit={kurangiGerak ? undefined : { opacity: 0, rotate: 90, scale: 0.6 }}
+                transition={{ duration: kurangiGerak ? 0 : 0.18, ease: ease.out }}
+                className="flex"
+              >
+                {menuTerbuka ? (
+                  <X size={20} aria-hidden />
+                ) : (
+                  <List size={20} aria-hidden />
+                )}
+              </motion.span>
+            </AnimatePresence>
           </button>
         </div>
       </div>
 
-      {/* ---------- Menu HP ---------- */}
+      {/* ---------- Menu HP ----------
+          Panelnya melipat turun dari tepi atas (`origin-top` + scaleY) dan
+          isinya menyusul berurutan; saat ditutup urutannya dibalik dari
+          bawah ke atas. Diatur lewat varian `bukaPanel`/`isiPanel`. */}
       <AnimatePresence>
         {menuTerbuka && (
           <motion.nav
             aria-label={c.nav.mobileNav}
-            initial={{ opacity: 0, y: -8 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -8 }}
-            transition={{ duration: 0.3, ease: ease.out }}
-            className="glass mx-gutter mt-2 rounded-panel p-2 md:hidden"
+            variants={kurangiGerak ? diam : bukaPanel}
+            initial="hidden"
+            animate="show"
+            exit="exit"
+            className="glass mx-gutter mt-2 origin-top rounded-panel p-2 md:hidden"
           >
             <ul className="flex flex-col gap-1">
               {tautan.map((t) => {
@@ -143,7 +166,7 @@ export function Header() {
                   pathTanpaLocale === t.path || pathTanpaLocale.startsWith(`${t.path}/`);
 
                 return (
-                  <li key={t.href}>
+                  <motion.li key={t.href} variants={kurangiGerak ? diam : isiPanel}>
                     <Link
                       href={t.href}
                       aria-current={aktif ? "page" : undefined}
@@ -152,10 +175,13 @@ export function Header() {
                     >
                       {t.label}
                     </Link>
-                  </li>
+                  </motion.li>
                 );
               })}
-              <li className="grid grid-cols-3 gap-2 pt-1">
+              <motion.li
+                variants={kurangiGerak ? diam : isiPanel}
+                className="grid grid-cols-3 gap-2 pt-1"
+              >
                 {LOCALES.map((l) => (
                   <Link
                     key={l}
@@ -167,8 +193,8 @@ export function Header() {
                     {LOCALE_LABEL[l]}
                   </Link>
                 ))}
-              </li>
-              <li className="pt-1">
+              </motion.li>
+              <motion.li variants={kurangiGerak ? diam : isiPanel} className="pt-1">
                 <Link
                   href={withLocale("/kontak", locale)}
                   onClick={() => setMenuTerbuka(false)}
@@ -176,7 +202,7 @@ export function Header() {
                 >
                   {c.nav.cta}
                 </Link>
-              </li>
+              </motion.li>
             </ul>
           </motion.nav>
         )}

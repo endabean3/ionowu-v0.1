@@ -64,6 +64,22 @@ export const masukGroup: Variants = {
   },
 };
 
+/* ---------- 1a. MASUK SAAT MENGGULIR NAIK ----------
+   Kembaran `masuk`, tapi datang dari ATAS. Dipakai otomatis (lewat
+   `useArahGulir`) ketika pengunjung menggulir ke atas: elemen harus datang
+   SEARAH gerakan pengguna. Kalau semua elemen selalu naik dari bawah,
+   menggulir ke atas terasa melawan arah -- isinya bergerak berlawanan
+   dengan jempol atau roda mouse. */
+
+export const masukDariAtas: Variants = {
+  hidden: { opacity: 0, y: -24 },
+  show: {
+    opacity: 1,
+    y: 0,
+    transition: { duration: duration.slow, ease: ease.out },
+  },
+};
+
 /* ---------- 1b. VARIASI ARAH MASUK ----------
    Dulu satu-satunya arah adalah "naik dari bawah" (24px). Sekarang boleh
    bervariasi per bagian supaya tidak terasa monoton diulang-ulang di
@@ -131,6 +147,49 @@ export const pindahHalaman: Variants = {
     y: -8,
     transition: { duration: 0.26, ease: ease.inOut },
   },
+};
+
+/* ---------- 5. BUKA / TUTUP PANEL ----------
+   Untuk menu HP: panelnya sendiri melipat turun saat dibuka dan melipat
+   balik ke atas saat ditutup, sementara isinya muncul berurutan.
+
+   `staggerDirection: -1` saat keluar membuat penutupan berjalan dari item
+   terbawah ke teratas -- kebalikan urutan membuka. Ini yang membuat menutup
+   terasa seperti gerakan tersendiri, bukan sekadar panel yang hilang. */
+
+export const bukaPanel: Variants = {
+  hidden: { opacity: 0, y: -12, scaleY: 0.96 },
+  show: {
+    opacity: 1,
+    y: 0,
+    scaleY: 1,
+    transition: {
+      duration: duration.mid,
+      ease: ease.out,
+      staggerChildren: 0.05,
+      delayChildren: 0.06,
+    },
+  },
+  exit: {
+    opacity: 0,
+    y: -12,
+    scaleY: 0.96,
+    /* Menutup ~65% dari lama membuka -- keluar yang lebih cepat dari masuk
+       membuat antarmuka terasa sigap, bukan lamban. */
+    transition: {
+      duration: 0.22,
+      ease: ease.inOut,
+      staggerChildren: 0.03,
+      staggerDirection: -1,
+    },
+  },
+};
+
+/** Satu baris di dalam panel yang dibuka/ditutup. */
+export const isiPanel: Variants = {
+  hidden: { opacity: 0, y: -8 },
+  show: { opacity: 1, y: 0, transition: { duration: duration.mid, ease: ease.out } },
+  exit: { opacity: 0, y: -6, transition: { duration: 0.18, ease: ease.inOut } },
 };
 
 /* ============================================================
