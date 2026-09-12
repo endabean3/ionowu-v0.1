@@ -6,7 +6,6 @@ import { TiltCard } from "@/components/ui/TiltCard";
 import { KaryaMedia } from "@/components/ui/KaryaMedia";
 import { Button } from "@/components/ui/Button";
 import { RevealGroup, RevealItem } from "@/components/motion/Reveal";
-import { Magnet } from "@/components/motion/Magnet";
 import { LatarBagian } from "@/components/sections/LatarBagian";
 import { daftarKarya } from "@/lib/data/karya";
 import { copy, type Locale, withLocale } from "@/lib/i18n";
@@ -56,12 +55,10 @@ export function KaryaPilihan({ locale = "id" }: { locale?: Locale }) {
         </RevealGroup>
 
         <div className="mt-12 flex justify-center">
-          <Magnet jangkauan={60} kekuatan={6}>
-            <Button href={withLocale("/karya", locale)} variant="secondary">
-              {c.common.allWork}
-              <ArrowRight size={16} weight="bold" aria-hidden />
-            </Button>
-          </Magnet>
+          <Button href={withLocale("/karya", locale)} variant="secondary">
+            {c.common.allWork}
+            <ArrowRight size={16} weight="bold" aria-hidden />
+          </Button>
         </div>
       </Container>
     </Section>

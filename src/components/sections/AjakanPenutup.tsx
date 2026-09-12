@@ -3,7 +3,6 @@ import { Container, Section } from "@/components/ui/Container";
 import { Button } from "@/components/ui/Button";
 import { Reveal } from "@/components/motion/Reveal";
 import { BlurReveal } from "@/components/motion/BlurReveal";
-import { Magnet } from "@/components/motion/Magnet";
 import { LatarBagian } from "@/components/sections/LatarBagian";
 import { copy, type Locale, withLocale } from "@/lib/i18n";
 
@@ -24,12 +23,10 @@ export function AjakanPenutup({ locale = "id" }: { locale?: Locale }) {
             {c.home.finalLead}
           </p>
           <div className="mt-10 flex justify-center">
-            <Magnet jangkauan={70} kekuatan={5}>
-              <Button href={withLocale("/kontak", locale)} size="lg">
-                {c.common.consult}
-                <ArrowRight size={18} weight="bold" aria-hidden />
-              </Button>
-            </Magnet>
+            <Button href={withLocale("/kontak", locale)} size="lg">
+              {c.common.consult}
+              <ArrowRight size={18} weight="bold" aria-hidden />
+            </Button>
           </div>
         </Reveal>
       </Container>

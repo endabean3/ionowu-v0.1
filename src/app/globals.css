@@ -467,6 +467,19 @@
     box-shadow: var(--glow-soft);
   }
 
+  /* Ikon di dalam tombol bergeser sedikit saat disentuh, sementara tombolnya
+     sendiri diam di tempat. Ini pengganti gerakan "naik 4px" yang dicabut
+     dari Button.tsx: yang berpindah cuma ikon di dalam kotak, bukan kotaknya,
+     jadi target klik tidak pernah menjauh dari kursor yang sedang membidik.
+     Panah ke kanan bergeser mendatar, panah serong ikut naik sedikit sesuai
+     arah mata panahnya. */
+  .btn svg {
+    transition: transform var(--duration-mid) var(--ease-out);
+  }
+  .btn:hover svg {
+    transform: translateX(3px);
+  }
+
   .btn-ghost {
     color: var(--button-ghost-fg);
   }
@@ -663,39 +676,55 @@
      cahaya lembut di sudut, tanpa mengubur kartu atau teks di atasnya.
      Kontras teks tidak terpengaruh: semua lapisan ini duduk di belakang
      .card yang punya latar sendiri. */
+  /* Titik dan garis kisi DIPINDAH ke `.kisi-gerak` (12 Sep 2026). Alasannya
+     terukur: parallax memang sudah berjalan -- lapisannya bergeser ~44px
+     sepanjang gulir -- tapi yang digerakkan cuma gumpalan ber-`blur(90px)`
+     pada `opacity: 0.16`. Mata tidak bisa menyadari sesuatu bergeser kalau
+     benda itu sendiri nyaris tak terlihat dan tidak punya tepi. Titik dan
+     garis inilah satu-satunya struktur kasatmata di latar, dan justru dia
+     yang sebelumnya diam karena dilukis sebagai `background` pada <Section>.
+     Di sini yang tersisa hanya cahaya sudut, yang memang pantas diam. */
   .section-texture {
     background-image:
-      /* titik */
-      radial-gradient(circle at 1px 1px, rgb(255 255 255 / 0.1) 1px, transparent 0),
-      /* garis kisi vertikal + horizontal, sangat tipis */
-        linear-gradient(to right, rgb(255 255 255 / 0.03) 1px, transparent 1px),
-      linear-gradient(to bottom, rgb(255 255 255 / 0.03) 1px, transparent 1px),
-      /* gumpalan warna brand */
-        radial-gradient(42rem 24rem at 4% -5%, rgb(15 155 156 / 0.12), transparent 68%),
+      radial-gradient(42rem 24rem at 4% -5%, rgb(15 155 156 / 0.12), transparent 68%),
       radial-gradient(34rem 22rem at 100% 105%, rgb(16 63 105 / 0.22), transparent 70%);
-    background-size:
-      24px 24px,
-      96px 96px,
-      96px 96px,
-      auto,
-      auto;
-    background-repeat: repeat, repeat, repeat, no-repeat, no-repeat;
+    background-repeat: no-repeat, no-repeat;
   }
 
   [data-theme="light"] .section-texture {
     background-image:
-      radial-gradient(circle at 1px 1px, rgb(16 63 105 / 0.1) 1px, transparent 0),
-      linear-gradient(to right, rgb(16 63 105 / 0.04) 1px, transparent 1px),
-      linear-gradient(to bottom, rgb(16 63 105 / 0.04) 1px, transparent 1px),
       radial-gradient(42rem 24rem at 4% -5%, rgb(15 155 156 / 0.1), transparent 68%),
       radial-gradient(34rem 22rem at 100% 105%, rgb(247 122 14 / 0.09), transparent 70%);
+    background-repeat: no-repeat, no-repeat;
+  }
+
+  /* Kisi yang IKUT BERGESER saat digulir -- ini yang membuat parallax
+     benar-benar terlihat. Titik berjarak tetap 24px memberi mata patokan
+     yang jelas: begitu kisi bergerak dengan kecepatan berbeda dari isi
+     halaman, selisihnya langsung terbaca sebagai kedalaman. Dipasang di
+     dalam <ParallaxScroll> lewat komponen LatarBagian. */
+  .kisi-gerak {
+    background-image:
+      radial-gradient(circle at 1px 1px, rgb(255 255 255 / 0.1) 1px, transparent 0),
+      linear-gradient(to right, rgb(255 255 255 / 0.03) 1px, transparent 1px),
+      linear-gradient(to bottom, rgb(255 255 255 / 0.03) 1px, transparent 1px);
     background-size:
       24px 24px,
       96px 96px,
+      96px 96px;
+    background-repeat: repeat, repeat, repeat;
+  }
+
+  [data-theme="light"] .kisi-gerak {
+    background-image:
+      radial-gradient(circle at 1px 1px, rgb(16 63 105 / 0.1) 1px, transparent 0),
+      linear-gradient(to right, rgb(16 63 105 / 0.04) 1px, transparent 1px),
+      linear-gradient(to bottom, rgb(16 63 105 / 0.04) 1px, transparent 1px);
+    background-size:
+      24px 24px,
       96px 96px,
-      auto,
-      auto;
-    background-repeat: repeat, repeat, repeat, no-repeat, no-repeat;
+      96px 96px;
+    background-repeat: repeat, repeat, repeat;
   }
 
   /* Gumpalan cahaya yang mengambang pelan. Dipakai sebagai elemen terpisah
