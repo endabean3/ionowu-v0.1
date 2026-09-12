@@ -2,7 +2,6 @@ import { Heartbeat, Check, ArrowRight } from "@phosphor-icons/react/dist/ssr";
 import { Container, Section } from "@/components/ui/Container";
 import { Reveal, RevealGroup, RevealItem } from "@/components/motion/Reveal";
 import { BlurReveal } from "@/components/motion/BlurReveal";
-import { Magnet } from "@/components/motion/Magnet";
 import { LatarBagian } from "@/components/sections/LatarBagian";
 import { Button } from "@/components/ui/Button";
 import { cariLayananLocale } from "@/lib/data/layanan";
@@ -41,12 +40,10 @@ export function Perawatan({ locale = "id" }: { locale?: Locale }) {
             <BlurReveal as="h2" text={c.home.maintenanceTitle} className="text-h2 text-ink block" />
             <p className="text-body text-ink-muted">{c.home.maintenanceLead}</p>
             <div className="mt-2">
-              <Magnet jangkauan={60} kekuatan={6}>
-                <Button href={withLocale("/layanan/infrastruktur-server", locale)} variant="secondary">
-                  {c.common.learnMore}
-                  <ArrowRight size={16} weight="bold" aria-hidden />
-                </Button>
-              </Magnet>
+              <Button href={withLocale("/layanan/infrastruktur-server", locale)} variant="secondary">
+                {c.common.learnMore}
+                <ArrowRight size={16} weight="bold" aria-hidden />
+              </Button>
             </div>
           </Reveal>
 

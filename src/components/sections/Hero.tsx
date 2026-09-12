@@ -3,7 +3,6 @@ import { Container } from "@/components/ui/Container";
 import { Button } from "@/components/ui/Button";
 import { BlurReveal } from "@/components/motion/BlurReveal";
 import { Reveal } from "@/components/motion/Reveal";
-import { Magnet } from "@/components/motion/Magnet";
 import { Parallax2D } from "@/components/motion/Parallax2D";
 import { ParallaxScroll } from "@/components/motion/ParallaxScroll";
 import { HeroBackground } from "@/components/sections/HeroBackground";
@@ -61,17 +60,18 @@ export function Hero({ locale = "id" }: { locale?: Locale }) {
 
             <Reveal delay={0.6}>
               <div className="flex flex-wrap items-center gap-4">
-                <Magnet jangkauan={70} kekuatan={5}>
-                  <Button href={withLocale("/kontak", locale)} size="lg">
-                    {c.common.consult}
-                    <ArrowRight size={18} weight="bold" aria-hidden />
-                  </Button>
-                </Magnet>
-                <Magnet jangkauan={70} kekuatan={5}>
-                  <Button href={withLocale("/karya", locale)} size="lg" variant="secondary">
-                    {c.common.viewWork}
-                  </Button>
-                </Magnet>
+                {/* Tanpa <Magnet>: tombol sengaja diam di tempat. Efek magnet
+                    menarik tombol ke arah kursor, artinya target kliknya
+                    justru menjauh dari titik yang sedang dibidik pengguna.
+                    Rasa interaktifnya sekarang dari glow, border, dan ikon
+                    yang bergeser -- semuanya tanpa memindahkan tombol. */}
+                <Button href={withLocale("/kontak", locale)} size="lg">
+                  {c.common.consult}
+                  <ArrowRight size={18} weight="bold" aria-hidden />
+                </Button>
+                <Button href={withLocale("/karya", locale)} size="lg" variant="secondary">
+                  {c.common.viewWork}
+                </Button>
               </div>
             </Reveal>
           </Container>

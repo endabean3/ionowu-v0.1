@@ -55,12 +55,22 @@ export function Button(props: ButtonAsButton | ButtonAsLink) {
 
   const kelas = cn("btn", varian[variant], ukuran[size], className);
 
-  /* SENTUH (naik 4px) + TEKAN (mengecil 98%).
-     Keduanya memakai transform saja — tidak memicu perhitungan ulang tata letak. */
+  /* HANYA TEKAN (mengecil 98%). Gerakan "naik 4px" saat disentuh sengaja
+     dicabut (12 Sep 2026, permintaan pemilik produk).
+
+     Alasannya bukan selera: tombol yang bergeser saat kursor mendekat
+     memindahkan target kliknya sendiri menjauh dari titik yang sedang
+     dibidik pengguna. Umpan balik sentuh sekarang dikerjakan seluruhnya
+     lewat CSS -- glow pada `.btn-primary:hover`, border dan bayangan pada
+     `.btn-secondary:hover`, plus ikon di dalamnya yang bergeser sedikit --
+     jadi tombol tetap terasa hidup tanpa pernah berpindah tempat.
+
+     Mengecil saat ditekan tetap dipertahankan: pusatnya tidak bergeser
+     (tepinya menyusut simetris), dan justru inilah umpan balik tekan yang
+     sudah diharapkan pengguna di semua platform. */
   const gerak = kurangiGerak
     ? {}
     : {
-        whileHover: sentuh.hover,
         whileTap: { scale: tekan.scale },
         transition: { duration: sentuh.durationSec, ease: ease.out },
       };
